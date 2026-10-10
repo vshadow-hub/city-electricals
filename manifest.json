@@ -1,0 +1,23 @@
+{
+  "name": "City Electricals ERP & POS",
+  "short_name": "City Elec",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a12",
+  "theme_color": "#070a12",
+  "description": "City Electricals ERP & POS Terminal",
+  "icons": [
+    {
+      "src": "logo-android.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-desktop.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{if(!localStorage.getItem('ce_fresh_v12')){var k=['ce_all_bills','ce_inventory_v4','ce_suppliers','ce_counters','ce_stock_ledger','ce_customers'];var has=k.some(function(x){return localStorage.getItem(x)});
+if(has&&!confirm('FRESH START\n\nDelete ALL old bills, stock and suppliers saved in this browser and start new?\n\nOK = delete old data\nCancel = keep old data (this question comes again next time)\n\nTip: press Cancel, use the Backup button, then reopen.'))return;
+k.forEach(function(x){localStorage.removeItem(x)});localStorage.setItem('ce_fresh_v12','done')}}catch(e){}})();</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#070a12"><title>City Electricals ERP & POS Terminal v22</title>
+<script>(function(){var w=console.warn;console.warn=function(){if(arguments[0]&&String(arguments[0]).indexOf("cdn.tailwindcss.com")>-1)return;return w.apply(console,arguments)}})();</script>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Thunder & Splash Animation */
+@keyframes lightningStrike {
+0% { transform: translateY(-120px) scale(0.5); opacity: 0; filter: drop-shadow(0 0 0px #f59e0b); }
+40% { transform: translateY(12px) scale(1.12); opacity: 1; filter: drop-shadow(0 0 35px #f59e0b); }
+70% { transform: translateY(-4px) scale(0.96); opacity: 1; }
+100% { transform: translateY(0) scale(1); opacity: 1; filter: drop-shadow(0 0 20px #d97706); }
+}
+@keyframes goldGlow {
+0%, 100% { text-shadow: 0 0 10px #f59e0b, 0 0 20px #b45309; }
+50% { text-shadow: 0 0 25px #fbbf24, 0 0 40px #d97706; }
+}
+.anim-thunder { animation: lightningStrike 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.glow-gold { animation: goldGlow 2s infinite ease-in-out; }
+
+.electric-grid {
+background-color: #0b0f19;
+background-image: radial-gradient(rgba(245, 158, 11, 0.12) 1px, transparent 1px);
+background-size: 26px 26px;
+}
+
+/* ================= ADVANCED A4 PRINT STYLESHEET ================= */
+@page {
+size: A4 portrait;
+margin: 8mm 10mm;
+}
+@media screen {
+#printableInvoiceWrapper { display: none !important; }
+}
+@media print {
+body {
+background: #ffffff !important;
+color: #000000 !important;
+margin: 0 !important;
+padding: 0 !important;
+-webkit-print-color-adjust: exact !important;
+print-color-adjust: exact !important;
+}
+body > *:not(#printableInvoiceWrapper) { display: none !important; }
+#printableInvoiceWrapper {
+display: block !important;
+position: absolute !important;
+left: 0 !important;
+top: 0 !important;
+width: 100% !important;
+background: #ffffff !important;
+color: #000000 !important;
+}
+.a4-page-frame {
+width: 100% !important;
+max-width: 190mm !important;
+min-height: 275mm !important;
+margin: auto !important;
+border: 2px solid #000000 !important;
+padding: 6mm !important;
+box-sizing: border-box !important;
+display: flex !important;
+flex-direction: column !important;
+justify-content: space-between !important;
+}
+table, th, td {
+border-color: #000000 !important;
+}
+}
+/* ===== v5 UI upgrade ===== */
+html{scroll-behavior:smooth}
+header{position:sticky;top:0;z-index:30;backdrop-filter:blur(10px);background:rgba(15,23,42,.88)!important}
+.dash-card{background:linear-gradient(145deg,rgba(30,41,59,.85),rgba(15,23,42,.9));border:1px solid rgba(245,158,11,.18);border-radius:16px;padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+input:focus,select:focus{box-shadow:0 0 0 3px rgba(245,158,11,.25)!important;border-color:#f59e0b!important}
+tbody tr:nth-child(even){background:rgba(255,255,255,.015)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#334155;border-radius:8px}
+.toast{position:fixed;bottom:22px;right:22px;z-index:99;background:#059669;color:#fff;font-weight:700;font-size:12px;padding:10px 16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:tIn .25s ease}
+.toast.bad{background:#e11d48}
+@keyframes tIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@media print{
+body.print-report > *:not(#mainWorkspace){display:none!important}
+body.print-report #mainWorkspace{display:block!important}
+body.print-report header,body.print-report #dashStrip,body.print-report main > div:not(#tabReports),body.print-report #tabReports button,body.print-report #tabReports input{display:none!important}
+body.print-report #tabReports{display:block!important}
+body.print-report *{color:#000!important;background:#fff!important;border-color:#000!important}
+}
+/* v5.1: print ONLY the active shop's invoice layout */
+@media print{
+#printableInvoiceWrapper .a4-page-frame:not(.active-layout){display:none!important}
+#printableInvoiceWrapper .a4-page-frame.active-layout{display:flex!important}
+}
+
+/* ===== v6 THEME: Voltage Gold ===== */
+@media screen{
+:root{--bg:#070a12;--card:rgba(17,24,39,.92);--card2:#0a0f1c;--bd:rgba(245,158,11,.20);--a:#f59e0b;--a2:#fbbf24;--g1:rgba(245,158,11,.16);--g2:rgba(59,130,246,.10);--grid:rgba(245,158,11,.06)}
+body.electric-grid{background:var(--bg)!important}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 12% 8%,var(--g1),transparent 42%),radial-gradient(circle at 88% 92%,var(--g2),transparent 46%),linear-gradient(var(--grid) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/44px 44px;animation:gridDrift 24s linear infinite}
+@keyframes gridDrift{to{background-position:0 0,0 0,44px 44px,44px 44px}}
+body::after{content:'';position:fixed;left:0;right:0;top:0;height:2px;z-index:70;pointer-events:none;background:linear-gradient(90deg,transparent,var(--a2),transparent) no-repeat;background-size:35% 100%;animation:sweep 3.6s linear infinite}
+@keyframes sweep{from{background-position:-40% 0}to{background-position:140% 0}}
+#splashScreen{background:radial-gradient(circle at 50% 40%,var(--g1),var(--bg) 65%)!important}
+.bg-slate-900,.bg-slate-900\/90{background:linear-gradient(160deg,var(--card),var(--card2))!important}
+.bg-slate-950{background:var(--card2)!important}
+.border-slate-800,.border-slate-700{border-color:var(--bd)!important}
+.bg-amber-500,.hover\:bg-amber-400:hover{background:var(--a)!important}
+.hover\:bg-amber-400:hover{background:var(--a2)!important}
+.bg-amber-500\/10,.bg-amber-500\/20{background:color-mix(in srgb,var(--a) 16%,transparent)!important}
+.text-amber-300,.text-amber-400,.text-amber-500{color:var(--a2)!important}
+.border-amber-500,.border-amber-400,.border-amber-500\/30,.border-amber-500\/40,.border-amber-500\/60,.hover\:border-amber-400:hover{border-color:var(--a)!important}
+.bg-gradient-to-r{background-image:linear-gradient(90deg,var(--a),var(--a2))!important}
+.bg-amber-500{box-shadow:0 0 14px color-mix(in srgb,var(--a) 45%,transparent)}
+#splashScreen h1,#shopSelectScreen h2{background:linear-gradient(90deg,var(--a2),#fff 50%,var(--a2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ce-logo-big{width:11rem;height:11rem;filter:drop-shadow(0 0 26px var(--a))}
+.ce-logo-mid{width:5rem;height:5rem;filter:drop-shadow(0 0 14px var(--a));margin-bottom:.6rem}
+.ce-logo-sm{width:2.7rem;height:2.7rem;filter:drop-shadow(0 0 8px var(--a))}
+main .rounded-2xl,#shopSelectScreen .group{position:relative;box-shadow:0 10px 34px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05)}
+main .rounded-2xl:not(.overflow-x-auto)::before,#shopSelectScreen .group::before{content:'';position:absolute;top:0;left:18px;right:18px;height:2px;border-radius:2px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--a),transparent)}
+#shopSelectScreen .group:hover{box-shadow:0 0 36px var(--g1),0 10px 34px rgba(0,0,0,.4)}
+header{position:sticky}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--a),transparent)}
+header button{border-radius:999px!important}
+thead tr{border-bottom:2px solid var(--a)}
+.dash-card{border-color:var(--bd)!important}
+::-webkit-scrollbar-thumb{background:var(--a)}
+}
+/* ===== v7 ===== */
+@media screen{
+body::before{display:none!important}
+#bgLayer{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#bgLayer svg{width:100%;height:100%;display:block}
+#bgLayer::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,calc(var(--scrim,.4)*.55)),rgba(0,0,0,var(--scrim,.4)))}
+main .rounded-2xl{backdrop-filter:blur(8px)}
+#splashScreen h1,#shopSelectScreen h2{font-family:'Orbitron','Segoe UI',sans-serif!important;font-weight:900!important;letter-spacing:.22em!important;filter:drop-shadow(0 0 10px var(--a))}
+#splashScreen h1{font-size:clamp(1.4rem,5vw,2.6rem)!important;margin-top:1rem!important}
+#shopSelectScreen h2{font-size:clamp(1.5rem,5vw,2.8rem)!important}
+#splashScreen h1::after,#shopSelectScreen h2::after{content:'';display:block;height:3px;width:70%;margin:10px auto 0;background:linear-gradient(90deg,transparent,var(--a),transparent)}
+#headerShopTitle{font-family:'Orbitron','Segoe UI',sans-serif;letter-spacing:.08em;font-size:.85rem}
+#themeBtn{position:fixed;left:16px;bottom:16px;z-index:90;padding:9px 16px;border-radius:999px;font:700 12px sans-serif;color:#000;background:var(--a);box-shadow:0 0 18px var(--g1),0 4px 16px rgba(0,0,0,.5);cursor:pointer;border:0}
+#themePanel{display:none;position:fixed;left:16px;bottom:62px;z-index:90;width:230px;padding:8px;border-radius:16px;background:var(--card);border:1px solid var(--bd);backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,.6)}
+#themePanel.open{display:block}
+#themePanel button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:10px;background:transparent;color:#e2e8f0;font:600 12px sans-serif;text-align:left;cursor:pointer}
+#themePanel button:hover,#themePanel button.on{background:rgba(255,255,255,.1)}
+#themePanel i{width:14px;height:14px;border-radius:50%;box-shadow:0 0 8px currentColor}
+}
+@media print{#bgLayer,#themeBtn,#themePanel{display:none!important}}
+
+/* ===== v8 ===== */
+body.billing-mode *,body.billing-mode *::before,body.billing-mode *::after{animation:none!important;transition:none!important}
+body.billing-mode::after{display:none!important}
+#themeBtn,#themePanel{display:none!important}
+#tabBilling input,#tabBilling select,#tabBilling textarea{background:#fff!important;color:#000!important;border:1px solid #94a3b8!important;color-scheme:light}
+#tabBilling input::placeholder{color:#64748b!important}
+#tabBilling select option{background:#fff;color:#000}
+#ceAsk{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;background:rgba(0,0,0,.65);padding:16px}
+#ceAsk.open{display:flex}
+#ceAsk .box{width:100%;max-width:380px;padding:22px;border-radius:16px;background:var(--card,#0f172a);border:1px solid var(--bd,#334155);box-shadow:0 20px 60px rgba(0,0,0,.7);color:#fff;text-align:center}
+#ceAsk .t{font:900 18px sans-serif;color:var(--a2,#fbbf24);margin-bottom:8px}
+#ceAsk p{font:14px sans-serif;margin:0 0 18px;color:#e2e8f0}
+#ceAsk .b{display:flex;gap:12px;justify-content:center}
+#ceAsk button{min-width:110px;padding:10px 18px;border:0;border-radius:10px;font:700 14px sans-serif;cursor:pointer;color:#fff}
+#ceYes{background:#059669}#ceNo{background:#e11d48}
+#ceAsk button:focus{outline:3px solid #fff}
+@media print{#ceAsk{display:none!important}}
+/* ===== v10 ===== */
+.nb{width:100%;flex:1 1 100%;font:11px Arial,sans-serif;color:#000;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.nb table{width:100%;border-collapse:collapse}
+.nb .g td,.nb .g th{border:1px solid #000;padding:3px 6px;vertical-align:middle}
+.nb .g{margin-top:-1px}.nb .c{text-align:center}.nb .r{text-align:right}
+.nb .nobd td{border:0;padding:2px 4px}
+.nb .ttl{font:900 34px Arial,sans-serif;text-align:center;letter-spacing:1px}
+.nb .red{color:#c0261c}
+.nb .bx{display:inline-block;border:2px solid #000;padding:2px 14px;font-weight:900;font-size:15px}
+.nb .hd td,.nb td.hd{background:#e5e5e5;text-align:center;font-weight:900}
+.nb .it td{border-top:0;border-bottom:0;height:21px}.nb .it tr:first-child td{border-top:1px solid #000;border-bottom:1px solid #000}
+.nb .band{background:#2b2a9a;color:#fff;text-align:center}
+.nb .bh td{background:#2b2a9a;color:#fff;text-align:center;font-weight:900}
+.cem{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px}
+.cemb{background:#fff;color:#000;border-radius:14px;padding:20px;max-width:440px;width:100%;max-height:92vh;overflow:auto;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.7)}
+.cemb.full,.cemb.reg{max-width:900px;text-align:left;padding:12px}
+.cemb .dt{font:900 18px sans-serif;margin-bottom:6px}.cemb p{margin:0 0 14px}
+.cemb .db{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.cemb .dh{font-size:11px;color:#555;margin-top:10px}
+.cemb button{background:#000;color:#fff;border:0;border-radius:9px;padding:10px 18px;font:700 14px sans-serif;cursor:pointer}
+.cemb button:focus{outline:3px solid #2563eb}
+.cemb label{display:block;text-align:left;font:700 12px sans-serif;margin:8px 0}
+.cemb input{display:block;width:100%;margin-top:3px;padding:8px;border:1px solid #000;border-radius:6px;background:#fff;color:#000}
+.vbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.paper{background:#fff;color:#000;width:794px;max-width:100%;margin:0 auto;padding:14px;border:1px solid #999;overflow-x:auto}.paper.wide{width:100%}
+.rt{width:100%;border-collapse:collapse;font:12px Arial,sans-serif;color:#000}
+.rt th,.rt td{border:1px solid #000;padding:5px 7px;text-align:left}.rt th{background:#e5e5e5}.rt .ft td{font-weight:900;background:#f1f1f1}
+.cemb .ib,.ib{background:#fff!important;color:#000!important;border:1px solid #888!important;padding:2px 7px!important;border-radius:6px;cursor:pointer;font-size:13px!important}
+.acbox{display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#fff;color:#000;border:1px solid #000;border-radius:8px;max-height:230px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.aci{padding:7px 10px;cursor:pointer;font-size:12px}.aci small{color:#555}.aci.on,.aci:hover{background:#000;color:#fff}.aci.on small,.aci:hover small{color:#ddd}
+#itemSearch{background:#fff!important;color:#000!important;border:1px solid #94a3b8!important}
+#repWrap{background:#fff;color:#000;border:1px solid #000;border-radius:12px;padding:14px}
+#repWrap,#repWrap *{color:#000}
+#repWrap .rtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#repWrap button{background:#fff;border:1px solid #000;border-radius:8px;padding:7px 13px;font:700 12px sans-serif;cursor:pointer}
+#repWrap button.on{background:#000;color:#fff}
+#repWrap .rf{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+#repWrap label{font:700 11px sans-serif;display:flex;flex-direction:column;gap:2px}
+#repWrap input{background:#fff!important;color:#000!important;border:1px solid #000!important;border-radius:6px;padding:6px;font-size:12px}
+#repWrap .ra{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+#repWrap .rbox{overflow:auto;max-height:60vh;border:1px solid #000}
+@media print{.cem{display:none!important}}
+/* ===== v21 dropdown component ===== */
+.acarrow{position:absolute;width:22px;height:22px;border:0;border-radius:6px;background:#e2e8f0;color:#000;font-size:10px;cursor:pointer;z-index:61;display:none;padding:0;line-height:22px}
+.acarrow:hover{background:#000;color:#fff}
+.aci mark{background:#fde047;color:#000;padding:0;border-radius:2px}
+.acno{padding:8px 10px;font-size:11px;color:#555;font-style:italic}
+
+/* ===== v19 ===== */
+.ltabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.ltabs button{background:#fff;color:#000;border:1px solid #000;border-radius:8px;padding:7px 14px;font:700 12px sans-serif;cursor:pointer}
+.ltabs button.on{background:#000;color:#fff;border-color:#fff}
+#ltHint{font-size:11px;color:#cbd5e1}
+
+/* ===== v17 ===== */
+.nb .rmk{border:1px solid #000;margin-top:-1px;padding:3px 7px;font-size:10px;line-height:1.4}
+.rmrow{display:flex;gap:10px;align-items:center;margin-top:10px}
+.rmrow label{font:700 12px sans-serif;color:#e2e8f0;white-space:nowrap}
+.rmrow input{flex:1;padding:8px 10px;border-radius:8px;font-size:13px}
+.cemb.pur{max-width:540px;text-align:left}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ===== v13 ===== */
+@page{size:A4;margin:8mm}
+.nb{display:flex;flex-direction:column}
+.nb .itw{flex:1 1 auto;display:flex;flex-direction:column;margin-top:-1px}
+.nb .itw table{height:100%;flex:1 1 auto;margin-top:0}
+.paper .nb{min-height:1000px}
+#printableInvoiceWrapper .a4-page-frame.active-layout.fit{height:268mm!important;min-height:0!important;max-height:268mm}
+#topStrip{position:fixed;top:0;left:0;right:0;height:22px;z-index:400;display:flex;justify-content:space-between;align-items:center;padding:0 8px;background:rgba(0,0,0,.78);color:#cbd5e1;font:600 10px Arial,sans-serif;letter-spacing:.05em}
+#topStrip button{background:none;border:1px solid #64748b;color:#e2e8f0;border-radius:50%;width:16px;height:16px;font:700 10px/14px Arial,sans-serif;cursor:pointer;padding:0;margin-left:6px}
+#topStrip button:hover{background:#fff;color:#000}
+body{padding-top:22px;padding-bottom:34px}
+header{top:22px!important}
+#kbBar{position:fixed;left:0;right:0;bottom:0;height:30px;z-index:400;display:flex;gap:16px;align-items:center;overflow-x:auto;white-space:nowrap;padding:0 12px;background:rgba(0,0,0,.88);color:#e2e8f0;font:12px Arial,sans-serif;border-top:1px solid #334155}
+#kbBar kbd{background:#fff;color:#000;border-radius:5px;padding:1px 6px;margin-right:5px;font:700 11px Arial,sans-serif;border-bottom:2px solid #888}
+@media print{#topStrip,#kbBar{display:none!important}body{padding:0!important}}
+
+/* ===== v12 ===== */
+#printableInvoiceWrapper .a4-page-frame.active-layout{min-height:0!important;justify-content:flex-start!important}
+.mArrow{width:100%;margin-top:8px;padding:6px;border-radius:8px;background:#fff!important;color:#000!important;border:1px solid #000!important;font-weight:700;font-size:12px;cursor:pointer}
+.mrep{background:#fff;color:#000;border:1px solid #000;border-radius:10px;max-height:300px;overflow:auto;margin-top:8px}
+#shopSelectScreen p{color:#d4ebe4!important;letter-spacing:.28em!important}
+#shopSelectScreen .grid>.group{border-radius:18px!important;min-height:215px}
+#shopSelectScreen .grid>.group::before{display:none!important}
+#shopSelectScreen .grid>.group p,#shopSelectScreen .grid>.group p *{font-family:'Segoe UI',Arial,sans-serif!important;font-size:14px!important;letter-spacing:0!important;font-weight:500!important}
+#shopSelectScreen .grid>.group:nth-child(1){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='220'%3E%3Cg fill='none' stroke='rgb(232,176,48)' stroke-width='2' opacity='.5' stroke-linejoin='round'%3E%3Cpath d='M150 20l-26 46h18l-12 42 34-52h-18z'/%3E%3Cpath d='M60 120l-22 38h15l-9 34 28-42h-15z'/%3E%3Cpath d='M215 130l-18 32h13l-8 28 24-35h-13z'/%3E%3Crect x='200' y='18' width='34' height='30' rx='4'/%3E%3Cpath d='M208 18v-9M226 18v-9M217 26l-5 9h8l-5 9'/%3E%3Crect x='10' y='20' width='30' height='26' rx='4'/%3E%3Cpath d='M18 20v-8M32 20v-8'/%3E%3C/g%3E%3C/svg%3E") 0 0/260px 220px,linear-gradient(160deg,#2b1d06,#110b02)!important;border:2px solid #e8b030!important;box-shadow:0 0 30px rgba(232,176,48,.5),inset 0 0 24px rgba(232,176,48,.12)!important}
+#shopSelectScreen .grid>.group:nth-child(1) h3,#shopSelectScreen .grid>.group:nth-child(1) div,#shopSelectScreen .grid>.group:nth-child(1)>div>span{color:#f3c243!important}
+#shopSelectScreen .grid>.group:nth-child(1) p,#shopSelectScreen .grid>.group:nth-child(1) p *{color:#d9cba0!important}
+#shopSelectScreen .grid>.group:nth-child(2){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='220'%3E%3Cg fill='none' stroke='rgb(40,200,210)' stroke-width='2' opacity='.45'%3E%3Cpath d='M0 40h70l20 20h60M30 110h50l16-16h80M10 170h100l20 20h70M190 0v45l22 22h48M120 220v-30'/%3E%3Ccircle cx='150' cy='60' r='5'/%3E%3Ccircle cx='176' cy='94' r='5'/%3E%3Ccircle cx='200' cy='190' r='5'/%3E%3Crect x='170' y='120' width='60' height='40' rx='4'/%3E%3Cpath d='M180 120v-8M200 120v-8M220 120v-8M180 160v8M200 160v8M220 160v8'/%3E%3Crect x='20' y='70' width='36' height='24' rx='3'/%3E%3C/g%3E%3C/svg%3E") 0 0/260px 220px,linear-gradient(160deg,#07303a,#031318)!important;border:2px solid #22c7d6!important;box-shadow:0 0 30px rgba(34,199,214,.45),inset 0 0 24px rgba(34,199,214,.1)!important}
+#shopSelectScreen .grid>.group:nth-child(2) h3{color:#fff!important}
+#shopSelectScreen .grid>.group:nth-child(2) h3 span,#shopSelectScreen .grid>.group:nth-child(2) p,#shopSelectScreen .grid>.group:nth-child(2) p *{color:#bfe3e8!important}
+#shopSelectScreen .grid>.group:nth-child(2)>div>span,#shopSelectScreen .grid>.group:nth-child(2)>div:last-child{color:#3fb8f5!important}
+#shopSelectScreen .grid>.group:nth-child(3){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='220'%3E%3Cg fill='none' stroke='rgb(200,196,255)' stroke-width='2' opacity='.4'%3E%3Crect x='20' y='50' width='30' height='24' rx='4'/%3E%3Cpath d='M26 50v-9a9 9 0 0118 0v9'/%3E%3Ccircle cx='35' cy='62' r='3'/%3E%3Cellipse cx='150' cy='70' rx='32' ry='40'/%3E%3Cellipse cx='150' cy='70' rx='24' ry='32'/%3E%3Cellipse cx='150' cy='70' rx='16' ry='24'/%3E%3Cellipse cx='150' cy='70' rx='8' ry='15'/%3E%3Crect x='200' y='140' width='30' height='24' rx='4'/%3E%3Cpath d='M206 140v-9a9 9 0 0118 0v9'/%3E%3Cellipse cx='70' cy='170' rx='24' ry='30'/%3E%3Cellipse cx='70' cy='170' rx='16' ry='22'/%3E%3Cellipse cx='70' cy='170' rx='8' ry='13'/%3E%3C/g%3E%3C/svg%3E") 0 0/260px 220px,linear-gradient(160deg,#171238,#0a0820)!important;border:2px solid rgba(255,255,255,.85)!important;box-shadow:0 0 30px rgba(255,255,255,.35),inset 0 0 24px rgba(160,150,255,.12)!important}
+#shopSelectScreen .grid>.group:nth-child(3) *{color:#e9e6ff!important}
+
+/* ===== v11 white/black boxes ===== */
+#tabBilling .rounded-2xl:focus-within{z-index:60}
+#tabBilling .overflow-x-auto{background:#fff!important;border:1px solid #000!important}
+#tabBilling .overflow-x-auto thead{background:#e5e5e5!important}
+#tabBilling .overflow-x-auto *:not(button){color:#000!important;border-color:#bbb!important}
+#tabBilling .overflow-x-auto tbody tr:hover{background:#f1f1f1!important}
+#tabBilling .overflow-x-auto button{color:#b91c1c!important}
+#tabMaster input,#tabMaster select,#tabMaster textarea{background:#fff!important;color:#000!important;border:1px solid #94a3b8!important;color-scheme:light}
+#tabMaster input::placeholder,#tabMaster textarea::placeholder{color:#64748b!important}
+#tabStock input{background:#fff!important;color:#000!important;border:1px solid #000!important}
+#tabStock .rounded-2xl{background:#fff!important;border:1px solid #000!important}
+#tabStock .rounded-2xl thead{background:#e5e5e5!important}
+#tabStock .rounded-2xl *:not(button){color:#000!important;border-color:#bbb!important}
+#tabStock .rounded-2xl td.low{color:#b91c1c!important;font-weight:900}
+#tabStock .rounded-2xl tbody tr:hover{background:#f1f1f1!important}
+
+/* ===== v14 ===== */
+#loginScreen{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;font-family:'Segoe UI',Roboto,Arial,sans-serif}
+.lg{position:relative;width:680px;height:470px;flex:none;border-radius:16px;overflow:hidden;color:#fff;border:1px solid rgba(255,255,255,.35);background:linear-gradient(135deg,rgba(14,58,58,.82),rgba(8,24,38,.92));backdrop-filter:blur(10px);box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 25px 80px rgba(0,0,0,.65),0 0 40px rgba(45,212,191,.18)}
+.lg>svg{position:absolute;inset:0;width:100%;height:100%}
+.lg .ver{position:absolute;top:18px;right:24px;font-weight:700;font-size:15px}
+.lg .ttl{position:absolute;left:0;width:350px;top:312px;text-align:center;font-size:23px;font-weight:700;letter-spacing:.5px;text-shadow:0 0 10px rgba(0,0,0,.6)}
+.lg .sub{position:absolute;left:0;width:350px;top:365px;text-align:center;font-size:14px}
+.lg .lic{position:absolute;left:24px;bottom:14px;font-size:14px}
+.lg .pnl{position:absolute;left:342px;top:133px;right:0;bottom:50px;border-radius:18px 0 0 18px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.22);border-right:0;backdrop-filter:blur(6px)}
+.lg input{position:absolute;left:358px;width:300px;height:41px;box-sizing:border-box;padding:0 12px;font-size:16px;color:#fff!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.3)!important;border-radius:4px;outline:none}
+.lg input::placeholder{color:#cbd5e1}
+.lg input:focus{border-color:#fb923c!important;box-shadow:0 0 12px rgba(251,146,60,.55)}
+#lUser{top:190px}#lPass{top:240px}#lPass2{top:290px;display:none}
+#lMsg{position:absolute;left:358px;width:300px;top:146px;font-size:11px;line-height:1.3}
+#lForgot{position:absolute;right:24px;top:292px;color:#fb923c;font-size:15px;text-decoration:underline;cursor:pointer}
+#lBtn{position:absolute;left:358px;width:300px;top:340px;height:46px;border-radius:8px;font:700 21px 'Segoe UI',Arial,sans-serif;color:#fff;cursor:pointer;background:linear-gradient(180deg,#0e6b73,#073a47);border:2px solid #22d3ee;box-shadow:0 0 18px rgba(34,211,238,.65),inset 0 0 10px rgba(34,211,238,.35)}
+#lBtn:hover{filter:brightness(1.2)}
+#lNew{position:absolute;left:358px;width:300px;top:402px;text-align:center;color:#fff;font-size:16px;text-decoration:underline;cursor:pointer}
+.abt{position:relative;width:560px;max-width:96vw;min-height:310px;background:#fff;color:#000;border:1px solid #666;overflow:hidden;font:13px Arial,sans-serif;padding:16px 20px;text-align:left;box-shadow:0 20px 70px rgba(0,0,0,.7)}
+.abt>*:not(.abs){position:relative;z-index:1}.abs{position:absolute;right:0;bottom:0;width:62%;height:100%}
+.abc{position:absolute!important;top:8px;right:12px;color:#1d4ed8;font-weight:700;text-decoration:underline;cursor:pointer}
+.abh{display:flex;align-items:center;gap:10px;font:700 34px Arial,sans-serif;color:#555}.abh .ce-logo-sm{filter:none}
+.abl1{margin-top:14px}.abl2{margin-top:14px;line-height:1.7}.abl3{margin-top:16px;line-height:1.5}.abl4{margin-top:18px;color:#555;font-size:11px}
+@media print{#loginScreen{display:none!important}}
+#topStrip button.lo{width:auto;height:18px;border-radius:9px;padding:0 10px;font:700 11px/16px Arial,sans-serif;background:#dc2626;border-color:#dc2626;color:#fff}
+#topStrip button.lo:hover{background:#fff;color:#dc2626}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* ===== Balu Tech A5 print ===== */
+.a4-page-frame.a5{width:136mm!important;max-width:136mm!important;padding:3mm!important;box-sizing:border-box!important;border:1.5px solid #000!important}
+#printableInvoiceWrapper .a4-page-frame.a5.fit{height:194mm!important;max-height:194mm!important;min-height:0!important}
+.a5c{font-size:10px!important}
+.a5c .ttl{font-size:28px!important}
+.a5c .it td{height:17px!important;padding:2px 5px!important}
+.a5c .g td{padding:2px 5px}
+.a5c [style*="height:74px"]{height:50px!important}
+</style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen electric-grid selection:bg-amber-500 selection:text-black"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="ceG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a2)"/><stop offset="1" style="stop-color:var(--a)"/></linearGradient>
+<filter id="ceGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<symbol id="ceLogo" viewBox="0 0 120 120">
+<circle cx="60" cy="60" r="57" fill="none" stroke="url(#ceG)" stroke-width="1.5" stroke-dasharray="3 7" opacity=".85"><animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="14s" repeatCount="indefinite"/></circle>
+<polygon points="60,9 104,34.5 104,85.5 60,111 16,85.5 16,34.5" fill="#080c16" stroke="url(#ceG)" stroke-width="3.5" filter="url(#ceGlow)"/>
+<polygon points="60,19 95,39 95,81 60,101 25,81 25,39" fill="none" stroke="url(#ceG)" stroke-width=".8" opacity=".45"/>
+<path d="M60 9V19M60 101V111" stroke="url(#ceG)" stroke-width="2"/>
+<g fill="var(--a2)"><circle cx="25" cy="39" r="2.4"/><circle cx="95" cy="39" r="2.4"/><circle cx="25" cy="81" r="2.4"/><circle cx="95" cy="81" r="2.4"/></g>
+<g fill="none" stroke="url(#ceG)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#ceGlow)"><path d="M86 42H50Q35 42 35 56V64Q35 78 50 78H86"/><path d="M63 42V78"/></g>
+<path d="M63 60H70L74 51L79 69L83 60H89" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#ceGlow)">><animate attributeName="opacity" values="1;.55;1" dur="1.4s" repeatCount="indefinite"/></path>
+</symbol></defs></svg>
+
+<!-- ================= 1. SPLASH SCREEN ================= -->
+<div id="splashScreen" class="fixed inset-0 z-50 bg-[#070a12] flex flex-col items-center justify-center p-4">
+<div class="anim-thunder flex flex-col items-center">
+<svg class="ce-logo-big" viewBox="0 0 120 120"><use href="#ceLogo"/></svg>
+<h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-widest mt-6 uppercase">CITY ELECTRICALS</h1>
+<p class="text-amber-400/90 text-xs tracking-widest uppercase mt-1 font-semibold">Tirupur District • Enterprise Terminal</p>
+</div>
+
+</div>
+
+<!-- ================= 2. SHOP SELECTION (3 BOXES) ================= -->
+<div id="shopSelectScreen" style="display: none;" class="min-h-screen flex-col items-center justify-center p-4 md:p-8">
+<div class="text-center max-w-xl mb-10 flex flex-col items-center">
+<svg class="ce-logo-mid" viewBox="0 0 120 120"><use href="#ceLogo"/></svg>
+<h2 class="text-3xl md:text-4xl font-black text-white tracking-tight">CITY ELECTRICALS</h2>
+<p class="text-xs text-amber-400 tracking-widest uppercase mt-1 font-semibold">Select Business Terminal</p>
+</div>
+
+<!-- 3 Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+<!-- Shop 1: City Electricals Main -->
+<div onclick="launchShop('shop1')" class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-amber-400 rounded-2xl p-6 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)] flex flex-col justify-between min-h-[190px]">
+<div>
+<span class="px-2.5 py-1 text-[11px] font-bold rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">Branch 1</span>
+<h3 class="text-xl font-bold text-white group-hover:text-amber-300 mt-3">CITY ELECTRICALS</h3>
+<p class="text-xs font-mono text-slate-400 mt-2">GSTIN: <span class="text-amber-300 font-bold">33BMVPM8500K1ZL</span></p>
+</div>
+<div class="mt-4 text-xs font-bold text-amber-400 group-hover:translate-x-1 transition flex items-center gap-1">
+Open Terminal ➔
+</div>
+</div>
+
+<!-- Shop 2: Samudra Branch 1 -->
+<div onclick="launchShop('shop2')" class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-blue-400 rounded-2xl p-6 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] flex flex-col justify-between min-h-[190px]">
+<div>
+<span class="px-2.5 py-1 text-[11px] font-bold rounded bg-blue-500/10 text-blue-400 border border-blue-500/30">Branch 2</span>
+<h3 class="text-lg font-bold text-white group-hover:text-blue-300 mt-3 leading-snug">
+CITY ELECTRICALS <span class="block text-xs font-normal text-blue-300 mt-0.5">/ SAMUDRA Branch 1</span>
+</h3>
+<p class="text-xs font-mono text-slate-400 mt-2">GSTIN: <span class="text-blue-300 font-bold">33BMVPM8500K1ZL</span></p>
+</div>
+<div class="mt-4 text-xs font-bold text-blue-400 group-hover:translate-x-1 transition flex items-center gap-1">
+Open Terminal ➔
+</div>
+</div>
+
+<!-- Shop 3: Balu Tech -->
+<div onclick="promptBaluTech()" class="group cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-emerald-400 rounded-2xl p-6 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(16,185,129,0.2)] flex flex-col justify-between min-h-[190px]">
+<div>
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 text-[11px] font-bold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Private</span>
+<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+</div>
+<h3 class="text-2xl font-black text-white group-hover:text-emerald-300 mt-4">BALU TECH</h3>
+</div>
+<div class="mt-4 text-xs font-bold text-emerald-400 group-hover:translate-x-1 transition flex items-center gap-1">
+Enter Password ➔
+</div>
+</div>
+</div>
+</div>
+
+<!-- ================= 3. BALU TECH PASSWORD MODAL ================= -->
+<div id="baluPasswordModal" style="display: none;" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+<div class="bg-slate-900 border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500 flex items-center justify-center">
+<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+</div>
+<div>
+<h3 class="text-lg font-bold text-white">BALU TECH</h3>
+<p class="text-xs text-slate-400">Security Authentication</p>
+</div>
+</div>
+<form onsubmit="verifyBaluPassword(event)" class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-300 mb-1">Enter Password</label>
+<input type="password" id="baluPassInput" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-400 focus:outline-none">
+<p id="baluPassError" class="text-xs text-rose-400 mt-1.5 hidden font-semibold">Incorrect password! Try again.</p>
+</div>
+<div class="flex gap-2 justify-end">
+<button type="button" onclick="closeBaluModal()" class="px-3.5 py-1.5 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+<button type="submit" class="px-4 py-1.5 rounded-lg text-xs bg-emerald-500 text-black font-bold hover:bg-emerald-400">Unlock & Enter</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ================= 4. MAIN APP WORKSPACE ================= -->
+<div id="mainWorkspace" style="display: none;" class="min-h-screen flex-col">
+<!-- Navbar -->
+<header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+<div class="flex items-center gap-3">
+<svg class="ce-logo-sm" viewBox="0 0 120 120"><use href="#ceLogo"/></svg>
+<div>
+<h2 id="headerShopTitle" class="text-base font-bold text-white leading-tight">City Electricals</h2>
+<p id="headerGstinText" class="text-[11px] font-mono text-amber-400">GSTIN: 33BMVPM8500K1ZL</p>
+</div>
+</div>
+
+<div class="flex items-center gap-2">
+<button onclick="switchTab('billing')" id="tabBtnBilling" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black">POS Billing</button>
+<button onclick="switchTab('master')" id="tabBtnMaster" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Master Data</button>
+<button onclick="switchTab('stock')" id="tabBtnStock" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Stock & Inventory</button>
+<button onclick="switchTab('reports')" id="tabBtnReports" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Sales Register</button>
+<button onclick="returnToShopSelect()" class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-800 hover:bg-rose-900/40 text-slate-300">Switch Branch</button>
+</div>
+</header>
+
+<main class="flex-1 p-3 md:p-6 max-w-7xl mx-auto w-full">
+
+<!-- ================= TAB 1: POS BILLING ================= -->
+<div id="tabBilling" class="space-y-4">
+<!-- Customer & Bill Info -->
+<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+<div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Invoice No. *</label>
+<input type="text" id="billInvNumber" tabindex="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-mono font-bold focus:border-amber-400 focus:outline-none">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Date</label>
+<input type="date" id="billDate" tabindex="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Customer Name</label>
+<input type="text" id="billCustName" tabindex="3" placeholder="M/s. Jayalakshmi / Cash" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Address / Town</label>
+<input type="text" id="billCustAddress" tabindex="4" placeholder="Cheran Nagar, Palladam" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Customer GSTIN (B2B)</label>
+<input type="text" id="billCustGstin" tabindex="5" placeholder="33AWFPR5243D1ZD" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white uppercase focus:outline-none">
+</div>
+</div>
+</div>
+
+<!-- Product Line Entry -->
+<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+<div class="flex justify-between items-center mb-3">
+<h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Fast Item Entry</h3>
+<span class="text-xs font-mono text-amber-400 font-semibold">Standard A4 Mode</span>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+<div class="lg:col-span-4">
+<label class="block text-[11px] text-slate-400 mb-1">Select Product</label>
+<select id="itemSelect" tabindex="6" onchange="onProductSelectChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:border-amber-400 focus:outline-none">
+<option value="">-- Choose Item --</option>
+</select>
+</div>
+<div class="lg:col-span-2">
+<label class="block text-[11px] text-slate-400 mb-1">HSN Code</label>
+<input type="text" id="itemHsn" tabindex="7" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono text-slate-300">
+</div>
+<div class="lg:col-span-2">
+<label class="block text-[11px] text-slate-400 mb-1">UOM</label>
+<select id="itemUom" tabindex="8" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-white">
+<option value="NOS">NOS</option>
+<option value="MTR">MTR</option>
+<option value="COIL">COIL</option>
+<option value="SET">SET</option>
+<option value="KGS">KGS</option>
+<option value="PCS">PCS</option>
+<option value="PKT">PKT</option>
+</select>
+</div>
+<div class="lg:col-span-2">
+<label class="block text-[11px] text-amber-300 font-semibold mb-1">Live Rate (₹)</label>
+<input type="number" id="itemRate" tabindex="9" step="0.01" class="w-full bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-2 text-xs font-mono text-amber-300 font-bold focus:outline-none">
+</div>
+<div class="lg:col-span-1">
+<label class="block text-[11px] text-slate-400 mb-1">Qty</label>
+<input type="number" id="itemQty" tabindex="10" value="1" min="1" onkeydown="handleQtyKeyDown(event)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-center font-bold text-white">
+</div>
+<div class="lg:col-span-1">
+<button type="button" onclick="addItemToCurrentBill()" id="addItemBtn" tabindex="11" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold py-2 rounded-lg text-xs transition">
+Add
+</button>
+</div>
+</div>
+
+<!-- Line Items Table -->
+<div class="overflow-x-auto mt-4 border border-slate-800 rounded-xl">
+<table class="w-full text-left text-xs">
+<thead class="bg-slate-950 text-slate-400 font-mono">
+<tr>
+<th class="p-2.5">Item Description</th>
+<th class="p-2.5">HSN</th>
+<th class="p-2.5">UOM</th>
+<th class="p-2.5 text-center">Qty</th>
+<th class="p-2.5 text-right">Rate (₹)</th>
+<th class="p-2.5 text-right gst-col">CGST 9%</th>
+<th class="p-2.5 text-right gst-col">SGST 9%</th>
+<th class="p-2.5 text-right">Amount (₹)</th>
+<th class="p-2.5 text-center">Action</th>
+</tr>
+</thead>
+<tbody id="billItemsTableBody" class="divide-y divide-slate-800 text-slate-200">
+<tr><td colspan="9" class="p-6 text-center text-slate-500">No items added yet. Choose a product and press Add.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Bill Footer Summary & Print Button -->
+<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="w-full md:w-auto grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+<div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+<span class="text-slate-400 block">Taxable Amount:</span>
+<span class="text-base font-bold font-mono text-white">₹<span id="totTaxableTxt">0.00</span></span>
+</div>
+<div class="bg-slate-950 p-3 rounded-xl border border-slate-800 gst-col">
+<span class="text-slate-400 block">CGST (9%):</span>
+<span class="text-base font-bold font-mono text-amber-300">₹<span id="totCgstTxt">0.00</span></span>
+</div>
+<div class="bg-slate-950 p-3 rounded-xl border border-slate-800 gst-col">
+<span class="text-slate-400 block">SGST (9%):</span>
+<span class="text-base font-bold font-mono text-amber-300">₹<span id="totSgstTxt">0.00</span></span>
+</div>
+<div class="bg-slate-950 p-3 rounded-xl border border-amber-500/40">
+<span class="text-amber-400 block font-semibold">Grand Total:</span>
+<span class="text-xl font-black font-mono text-emerald-400">₹<span id="totGrandTxt">0.00</span></span>
+</div>
+</div>
+
+<div class="w-full md:w-72">
+<button type="button" onclick="executeSaveAndPrint()" tabindex="12" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-lg flex items-center justify-center gap-3 shadow-[0_0_25px_rgba(245,158,11,0.35)] transition">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+PRINT INVOICE (A4)
+</button>
+</div>
+</div>
+</div>
+
+<!-- ================= TAB 2: MASTER DATA ================= -->
+<div id="tabMaster" style="display: none;" class="space-y-6">
+<div class="flex justify-between items-center">
+<div>
+<h3 class="text-xl font-bold text-white">Master Data Configuration</h3>
+<p class="text-xs text-slate-400">Manage Suppliers and Products Catalog</p>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Supplier Master -->
+<div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+<h4 class="text-sm font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+Add New Supplier
+</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+<input type="text" id="mSupName" placeholder="Supplier Company Name *" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+<input type="text" id="mSupGst" placeholder="Supplier GSTIN" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white uppercase font-mono">
+<input type="text" id="mSupPhone" placeholder="Phone Number" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+<input type="email" id="mSupEmail" placeholder="Email Address" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+<input type="text" id="mSupAddr" placeholder="Full Address" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+</div>
+<button type="button" onclick="saveSupplierMaster()" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 rounded-lg text-xs transition">
++ Save Supplier
+</button>
+<div class="overflow-x-auto max-h-56 mt-3 border border-slate-800 rounded-xl">
+<table class="w-full text-left text-xs">
+<thead class="bg-slate-950 text-slate-400"><tr><th class="p-2">Name</th><th class="p-2">GSTIN</th><th class="p-2">Phone</th></tr></thead>
+<tbody id="mSupplierTableBody" class="divide-y divide-slate-800"></tbody>
+</table>
+</div>
+</div>
+
+<!-- Product Master -->
+<div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+<h4 class="text-sm font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+Add New Product
+</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+<input type="text" id="mProdName" placeholder="Product Name *" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+<input type="text" id="mProdHsn" placeholder="HSN Code *" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono">
+<select id="mProdUom" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+<option value="NOS">NOS</option>
+<option value="MTR">MTR</option>
+<option value="COIL">COIL</option>
+<option value="SET">SET</option>
+<option value="KGS">KGS</option>
+<option value="PCS">PCS</option>
+<option value="PKT">PKT</option>
+</select>
+<input type="number" id="mProdRate" step="0.01" placeholder="Selling Price (₹) *" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono">
+<input type="number" id="mProdStock" placeholder="Initial Stock Qty" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+</div>
+<button type="button" onclick="saveProductMaster()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-xs transition">
++ Save Product
+</button>
+<div class="overflow-x-auto max-h-56 mt-3 border border-slate-800 rounded-xl">
+<table class="w-full text-left text-xs">
+<thead class="bg-slate-950 text-slate-400"><tr><th class="p-2">Name</th><th class="p-2">HSN</th><th class="p-2">Rate</th><th class="p-2">Stock</th></tr></thead>
+<tbody id="mProductTableBody" class="divide-y divide-slate-800"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ================= TAB 3: STOCK & INVENTORY ================= -->
+<div id="tabStock" style="display: none;" class="space-y-4">
+<h3 class="text-lg font-bold text-white">Stock Status & Inventory Movement</h3>
+<div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto">
+<table class="w-full text-left text-xs">
+<thead class="bg-slate-950 text-slate-400 font-mono">
+<tr>
+<th class="p-3">Product Name</th>
+<th class="p-3">HSN</th>
+<th class="p-3">UOM</th>
+<th class="p-3 text-right">Default Rate (₹)</th>
+<th class="p-3 text-center">Inward (Purchase)</th>
+<th class="p-3 text-center">Outward (Sales)</th>
+<th class="p-3 text-center">Balance Stock</th>
+</tr>
+</thead>
+<tbody id="stockTableBody" class="divide-y divide-slate-800 text-slate-200"></tbody>
+</table>
+</div>
+</div>
+
+<!-- ================= TAB 4: SALES REGISTER ================= -->
+<div id="tabReports" style="display: none;" class="space-y-4">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+<div>
+<h3 class="text-lg font-bold text-white">Sales Register & Auditor Export</h3>
+<p class="text-xs text-slate-400">Isolated Sales History for <span id="repShopNameBadge" class="text-amber-400 font-bold"></span></p>
+</div>
+<div class="flex flex-wrap items-center gap-2 text-xs">
+<div class="flex items-center gap-1.5">
+<span class="text-slate-400">From:</span>
+<input type="date" id="repFromDate" class="bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-white">
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-slate-400">To:</span>
+<input type="date" id="repToDate" class="bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-white">
+</div>
+<button type="button" onclick="renderSalesReports()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg text-white font-bold">
+Filter
+</button>
+<button type="button" onclick="exportSalesExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+Export Excel
+</button>
+<button type="button" onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-black font-bold px-3 py-1.5 rounded-lg flex items-center gap-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+Print / PDF
+</button>
+</div>
+</div>
+
+<div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto">
+<table class="w-full text-left text-xs" id="auditorTable">
+<thead class="bg-slate-950 text-slate-400 font-mono">
+<tr>
+<th class="p-3">Inv No</th>
+<th class="p-3">Date</th>
+<th class="p-3">Customer Name</th>
+<th class="p-3">Customer GSTIN</th>
+<th class="p-3 text-right">Taxable (₹)</th>
+<th class="p-3 text-right">CGST (₹)</th>
+<th class="p-3 text-right">SGST (₹)</th>
+<th class="p-3 text-right">Total Amount (₹)</th>
+</tr>
+</thead>
+<tbody id="reportsTableBody" class="divide-y divide-slate-800 text-slate-200"></tbody>
+</table>
+</div>
+</div>
+
+</main>
+</div>
+
+<!-- ================= 5. EXECUTIVE A4 INVOICE PRINT ENGINE ================= -->
+<div id="printableInvoiceWrapper">
+
+<!-- ===== LAYOUT 1: CITY ELECTRICALS (PDF PAGE 1 - ADVANCED A4) ===== -->
+<div id="layoutShop1" class="a4-page-frame">
+<div>
+<!-- Top Header Grid -->
+<div style="border-bottom: 2px solid #000; padding-bottom: 8px;">
+<table style="width: 100%; border: none; font-size: 11px;">
+<tr>
+<td style="width: 32%; vertical-align: top; line-height: 1.4;">
+<span style="font-weight: bold;">Cell:</span> 85240 85015<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;98424 21958<br>
+<span style="font-weight: bold; font-size: 12px; margin-top: 4px; display: inline-block;">GSTIN: <span style="font-family: monospace;">33BMVPM8500K1ZL</span></span>
+</td>
+<td style="width: 44%; text-align: center; vertical-align: top;">
+<div style="display: inline-block; border: 1.5px solid #000; padding: 2px 14px; font-weight: 900; font-size: 13px; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">TAX INVOICE</div>
+<h1 style="font-size: 26px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">CITY ELECTRICALS</h1>
+<p style="font-size: 11px; margin: 2px 0; font-weight: 600;">1/655, Chithambalam Pirivu, Palladam-641 664. Tirupur District</p>
+</td>
+<td style="width: 24%; text-align: right; vertical-align: top; font-size: 11px; line-height: 1.4;">
+<span style="font-weight: bold;">State Code:</span> 33<br>
+<span style="font-weight: bold;">Place of Supply:</span> TAMILNADU
+</td>
+</tr>
+</table>
+</div>
+
+<!-- Party & Invoice Meta Grid -->
+<table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; font-size: 11px;">
+<tr>
+<td style="width: 55%; border-right: 1.5px solid #000; padding: 6px 8px; vertical-align: top; line-height: 1.4;">
+<span style="font-weight: bold; text-decoration: underline;">Bill to Party :</span><br>
+<div style="font-size: 13px; font-weight: bold; margin-top: 2px;" id="sh1CustName">M/s. Jayalakshmi</div>
+<div id="sh1CustAddr">Cheran Nagar, Chithambalam</div>
+<div>GSTIN/UIN: <span id="sh1CustGstin" style="font-family: monospace; font-weight: bold;">-</span></div>
+<div>State: Tamil Nadu &nbsp;&nbsp;&nbsp;&nbsp; Code: 33</div>
+</td>
+<td style="width: 45%; padding: 6px 8px; vertical-align: top; line-height: 1.5;">
+<table style="width: 100%; border: none; font-size: 11px;">
+<tr><td style="font-weight: bold; width: 45%;">Invoice No.:</td><td id="sh1InvNo" style="font-family: monospace; font-weight: 900; font-size: 13px;">1</td></tr>
+<tr><td style="font-weight: bold;">Invoice Date:</td><td id="sh1Date" style="font-family: monospace;">03/04/2026</td></tr>
+<tr><td style="font-weight: bold;">Transport Mode:</td><td>By Road</td></tr>
+<tr><td style="font-weight: bold;">Vehicle Number:</td><td>TN 38 --</td></tr>
+</table>
+</td>
+</tr>
+</table>
+
+<!-- Main Items Table -->
+<table style="width: 100%; border-collapse: collapse; font-size: 11px; border-bottom: 2px solid #000;">
+<thead>
+<tr style="background: #f1f5f9; border-bottom: 1.5px solid #000; font-weight: bold;">
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 40px; text-align: center;">S.No.</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; text-align: left;">PRODUCT DESCRIPTION</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 80px; text-align: center;">HSN/ACS</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 60px; text-align: center;">QTY.</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 55px; text-align: center;">UOM</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; width: 90px; text-align: right;">RATE</th>
+<th style="padding: 6px 8px; width: 110px; text-align: right;">AMOUNT (₹)</th>
+</tr>
+</thead>
+<tbody id="sh1ItemsBody"></tbody>
+</table>
+</div>
+
+<!-- Bottom Financials & Bank Info -->
+<div>
+<table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; font-size: 11px;">
+<tr>
+<td style="width: 55%; border-right: 1.5px solid #000; padding: 8px; vertical-align: top; line-height: 1.45;">
+<span style="font-weight: bold; text-decoration: underline;">Bank Details:</span><br>
+A/c Name: <span style="font-weight: bold;">CITY ELECTRICALS</span><br>
+Bank & Branch: <span style="font-weight: bold;">BANK OF BARODA, PALLADAM.</span><br>
+A/c No.: <span style="font-family: monospace; font-weight: 900; font-size: 12px;">49140200000190</span><br>
+IFSC Code: <span style="font-family: monospace; font-weight: bold;">BARB0PALLAD</span><br>
+<div style="margin-top: 6px; font-weight: 600;">Rupees in words: <span id="sh1RupeesWords" style="font-style: italic; font-weight: normal; text-transform: capitalize;"></span></div>
+</td>
+<td style="width: 45%; padding: 8px; vertical-align: top;">
+<table style="width: 100%; border: none; font-size: 11px; line-height: 1.6;">
+<tr><td>Total Amount Before Tax:</td><td style="text-align: right; font-family: monospace; font-weight: bold;">₹<span id="sh1Taxable">0.00</span></td></tr>
+<tr><td>Add: CGST 9%:</td><td style="text-align: right; font-family: monospace;">₹<span id="sh1Cgst">0.00</span></td></tr>
+<tr><td>Add: SGST 9%:</td><td style="text-align: right; font-family: monospace;">₹<span id="sh1Sgst">0.00</span></td></tr>
+<tr style="border-top: 1.5px solid #000; font-size: 14px; font-weight: 900;">
+<td style="padding-top: 4px;">Grand Total:</td>
+<td style="text-align: right; font-family: monospace; padding-top: 4px;">₹<span id="sh1Grand">0.00</span></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<!-- Signatures Footer -->
+<table style="width: 100%; border: none; font-size: 10px; margin-top: 15px;">
+<tr>
+<td style="vertical-align: bottom;">E.& O.E.</td>
+<td style="text-align: right; vertical-align: bottom; font-weight: bold;">
+<div style="margin-bottom: 45px;">For CITY ELECTRICALS</div>
+<div>Authorised Signatory</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- ===== LAYOUT 2: SAMUDRA BRANCH 1 (PDF PAGE 2 - ADVANCED A4) ===== -->
+<div id="layoutShop2" class="a4-page-frame">
+<div>
+<!-- Samudra Header -->
+<div style="border-bottom: 2px solid #000; padding-bottom: 8px;">
+<table style="width: 100%; border: none; font-size: 11px;">
+<tr>
+<td style="width: 20%; vertical-align: top; font-size: 10px; font-weight: bold; line-height: 1.5;">Cell:<br>85240 85015<br>98424 21958</td>
+<td style="width: 60%; text-align: center; vertical-align: top;">
+<h1 style="font-size: 32px; font-weight: 900; margin: 0 0 3px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">CITY ELECTRICALS</h1>
+<div style="display: inline-block; border: 2px solid #000; padding: 2px 12px; font-weight: 900; font-size: 14px; letter-spacing: 1px;">SAMUDRA ( 2 YEARS WARRANTY )</div>
+<p style="font-size: 10px; margin: 4px 0 0;">99A, Chettipalayam Road, Palladam, Tirupur, Tamil Nadu - 641 664.</p>
+<div style="display: inline-block; border: 1.5px solid #000; padding: 1px 12px; font-weight: 800; font-size: 11px; margin-top: 4px;">TAX INVOICE</div>
+</td>
+<td style="width: 20%; text-align: right; vertical-align: top; font-size: 11px; line-height: 1.4;">
+<span style="font-weight: bold;">GSTIN:</span><br><span style="font-family: monospace; font-weight: bold;">33BMVPM8500K1ZL</span><br>
+<span style="font-weight: bold;">State Code:</span> 33
+</td>
+</tr>
+</table>
+</div>
+
+<!-- Meta Details -->
+<table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; font-size: 11px;">
+<tr>
+<td style="width: 60%; border-right: 1.5px solid #000; padding: 6px 8px; vertical-align: top; line-height: 1.4;">
+<span style="font-weight: bold;">To M/s.</span> <span id="sh2CustName" style="font-size: 13px; font-weight: bold;">Jayalakshmi</span><br>
+<div id="sh2CustAddr">Cheran Nagar, Chithambalam</div>
+<div>GSTIN: <span id="sh2CustGstin" style="font-family: monospace; font-weight: bold;">-</span></div>
+</td>
+<td style="width: 40%; padding: 6px 8px; vertical-align: top; line-height: 1.5;">
+<table style="width: 100%; border: none; font-size: 11px;">
+<tr><td style="font-weight: bold; width: 45%;">Invoice No.:</td><td id="sh2InvNo" style="font-family: monospace; font-weight: 900; font-size: 13px;">BR/1</td></tr>
+<tr><td style="font-weight: bold;">Date:</td><td id="sh2Date" style="font-family: monospace;">01/04/2026</td></tr>
+</table>
+</td>
+</tr>
+</table>
+
+<!-- Items Table -->
+<table style="width: 100%; border-collapse: collapse; font-size: 11px; border-bottom: 2px solid #000;">
+<thead>
+<tr style="background: #f1f5f9; border-bottom: 1.5px solid #000; font-weight: bold;">
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 40px; text-align: center;">S.No.</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; text-align: left;">Description of Goods</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 65px; text-align: center;">Tax</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 80px; text-align: center;">HSN Code</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 70px; text-align: center;">Qty</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; width: 95px; text-align: right;">Rate</th>
+<th style="padding: 6px 8px; width: 110px; text-align: right;">Amount (₹)</th>
+</tr>
+</thead>
+<tbody id="sh2ItemsBody"></tbody>
+</table>
+</div>
+
+<!-- Samudra Bottom: Tax Grid + T&C -->
+<div>
+<!-- Tax Grid from PDF -->
+<div style="border: 1.5px solid #000; margin: 8px 0;">
+<table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10px;">
+<thead>
+<tr style="background: #f8fafc; border-bottom: 1px solid #000; font-weight: bold;">
+<th style="border-right: 1px solid #000; padding: 4px;">Taxable Value</th>
+<th style="border-right: 1px solid #000; padding: 4px;">Tax Rate</th>
+<th style="border-right: 1px solid #000; padding: 4px;">CGST Rate</th>
+<th style="border-right: 1px solid #000; padding: 4px;">CGST Tax Value</th>
+<th style="border-right: 1px solid #000; padding: 4px;">SGST Rate</th>
+<th style="border-right: 1px solid #000; padding: 4px;">SGST Tax Value</th>
+<th style="padding: 4px;">TOTAL Tax Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border-right: 1px solid #000; padding: 4px; font-family: monospace; font-weight: bold;">₹<span id="sh2GridTaxable">0.00</span></td>
+<td style="border-right: 1px solid #000; padding: 4px;">18%</td>
+<td style="border-right: 1px solid #000; padding: 4px;">9%</td>
+<td style="border-right: 1px solid #000; padding: 4px; font-family: monospace;">₹<span id="sh2GridCgst">0.00</span></td>
+<td style="border-right: 1px solid #000; padding: 4px;">9%</td>
+<td style="border-right: 1px solid #000; padding: 4px; font-family: monospace;">₹<span id="sh2GridSgst">0.00</span></td>
+<td style="padding: 4px; font-family: monospace; font-weight: bold;">₹<span id="sh2GridTotTax">0.00</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding: 6px 0; font-size: 12px; font-weight: bold;">
+<div>Rupees in words: <span id="sh2RupeesWords" style="font-weight: normal; font-style: italic; text-transform: capitalize;"></span></div>
+<div style="font-size: 15px; font-weight: 900;">Grand Total: <span style="font-family: monospace;">₹<span id="sh2Grand">0.00</span></span></div>
+</div>
+
+<table style="width: 100%; border: none; font-size: 9.5px; margin-top: 10px;">
+<tr>
+<td style="width: 55%; vertical-align: top; line-height: 1.4;">
+<span style="font-weight: bold; text-decoration: underline;">Terms & Conditions:</span><br>
+1. Goods once sold will not be taken back.<br>
+2. Interest @24% will be charged payments made including 60 days.<br>
+3. Subject to Palladam Jurisdictions.
+</td>
+<td style="width: 20%; text-align: center; vertical-align: bottom; font-weight: bold;">Customer Signature</td>
+<td style="width: 25%; text-align: right; vertical-align: bottom; font-weight: bold;">
+<div style="margin-bottom: 35px;">For CITY ELECTRICALS</div>
+<div>Authorised Signatory</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- ===== LAYOUT 3: BALU TECH (ADVANCED A4 CASH MEMO) ===== -->
+<div id="layoutShop3" class="a4-page-frame">
+<div>
+<div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px;">
+<div style="display: inline-block; border: 1.5px solid #000; padding: 2px 14px; font-weight: 800; font-size: 11px; margin-bottom: 4px;">CASH MEMO / ESTIMATE</div>
+<h1 style="font-size: 28px; font-weight: 900; margin: 0; text-transform: uppercase;">BALU TECH</h1>
+<p style="font-size: 11px; margin: 2px 0;">Retail & Electrical Service, Palladam - 641 664</p>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #000; font-size: 11px; margin-top: 6px;">
+<tr>
+<td style="padding: 6px; font-weight: bold;">Customer: <span id="sh3CustName" style="font-weight: normal;">Cash Customer</span></td>
+<td style="padding: 6px; text-align: right;"><span style="font-weight: bold;">Bill No.:</span> <span id="sh3InvNo" style="font-family: monospace; font-weight: bold;">BT/1</span> &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: bold;">Date:</span> <span id="sh3Date"></span></td>
+</tr>
+</table>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 11px; border-bottom: 2px solid #000;">
+<thead>
+<tr style="background: #f1f5f9; border-bottom: 1.5px solid #000; font-weight: bold;">
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 45px; text-align: center;">#</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; text-align: left;">Item Description</th>
+<th style="border-right: 1px solid #000; padding: 6px 4px; width: 80px; text-align: center;">Qty</th>
+<th style="border-right: 1px solid #000; padding: 6px 8px; width: 110px; text-align: right;">Rate (₹)</th>
+<th style="padding: 6px 8px; width: 130px; text-align: right;">Amount (₹)</th>
+</tr>
+</thead>
+<tbody id="sh3ItemsBody"></tbody>
+</table>
+</div>
+
+<div>
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding: 10px 0; font-size: 13px; font-weight: bold;">
+<div>Rupees: <span id="sh3RupeesWords" style="font-weight: normal; font-style: italic; text-transform: capitalize;"></span></div>
+<div style="font-size: 16px; font-weight: 900;">Grand Total: <span style="font-family: monospace;">₹<span id="sh3Grand">0.00</span></span></div>
+</div>
+
+<table style="width: 100%; border: none; font-size: 10px; margin-top: 30px;">
+<tr>
+<td style="vertical-align: bottom;">Goods once sold cannot be returned.</td>
+<td style="text-align: right; vertical-align: bottom; font-weight: bold;">
+<div style="margin-bottom: 40px;">For BALU TECH</div>
+<div>Authorised Signature</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+</div>
+
+<!-- ================= JAVASCRIPT LOGIC ================= -->
+<script>
+const SHOPS = {
+shop1: {
+id: "shop1",
+title: "CITY ELECTRICALS",
+gstin: "33BMVPM8500K1ZL",
+series: "1",
+isGst: true,
+counter: 1
+},
+shop2: {
+id: "shop2",
+title: "CITY ELECTRICALS / SAMUDRA Branch 1",
+gstin: "33BMVPM8500K1ZL",
+series: "BR/",
+isGst: true,
+counter: 1
+},
+shop3: {
+id: "shop3",
+title: "BALU TECH",
+gstin: "",
+series: "BT/",
+isGst: false,
+counter: 1
+}
+};
+
+let activeShop = SHOPS.shop1;
+let currentBillItems = [];
+let savedInvoices = JSON.parse(localStorage.getItem('ce_all_bills') || '[]');
+
+let suppliers = JSON.parse(localStorage.getItem('ce_suppliers') || '[]');
+
+let inventory = JSON.parse(localStorage.getItem('ce_inventory_v4') || '[]');
+
+window.onload = function() {
+const bDate = document.getElementById('billDate');
+if (bDate) bDate.valueAsDate = new Date();
+
+const prog = document.getElementById('splashProgress');
+if (prog) setTimeout(() => { prog.style.width = '100%'; }, 50);
+
+setTimeout(skipSplash, 3500);
+};
+
+function skipSplash() {
+const splash = document.getElementById('splashScreen');
+const shopScreen = document.getElementById('shopSelectScreen');
+if (splash) splash.style.display = 'none';
+if (shopScreen) shopScreen.style.display = 'flex';
+}
+
+function promptBaluTech() {
+document.getElementById('baluPassError').classList.add('hidden');
+document.getElementById('baluPassInput').value = '';
+const m = document.getElementById('baluPasswordModal');
+m.style.display = 'flex';
+setTimeout(() => document.getElementById('baluPassInput').focus(), 100);
+}
+
+function closeBaluModal() {
+document.getElementById('baluPasswordModal').style.display = 'none';
+}
+
+function verifyBaluPassword(e) {
+e.preventDefault();
+const pass = document.getElementById('baluPassInput').value.trim();
+if (pass === 'balu@123') {
+closeBaluModal();
+launchShop('shop3');
+} else {
+document.getElementById('baluPassError').classList.remove('hidden');
+}
+}
+
+function launchShop(key) {
+activeShop = SHOPS[key];
+document.getElementById('shopSelectScreen').style.display = 'none';
+document.getElementById('mainWorkspace').style.display = 'flex';
+
+document.getElementById('headerShopTitle').textContent = activeShop.title;
+document.getElementById('headerGstinText').textContent = activeShop.isGst ? `GSTIN: ${activeShop.gstin}` : 'Non-GST Mode';
+document.getElementById('repShopNameBadge').textContent = activeShop.title;
+
+document.querySelectorAll('.gst-col').forEach(c => {
+activeShop.isGst ? c.classList.remove('hidden') : c.classList.add('hidden');
+});
+
+refreshInvoiceNumber();
+populateDropdown();
+renderStockTable();
+renderMasterTables();
+renderSalesReports();
+}
+
+function returnToShopSelect() {
+document.getElementById('mainWorkspace').style.display = 'none';
+document.getElementById('shopSelectScreen').style.display = 'flex';
+}
+
+function refreshInvoiceNumber() {
+document.getElementById('billInvNumber').value = activeShop.id === 'shop1'
+? `${activeShop.counter}`
+: `${activeShop.series}${activeShop.counter}`;
+}
+
+function populateDropdown() {
+const sel = document.getElementById('itemSelect');
+sel.innerHTML = '<option value="">-- Choose Item --</option>';
+inventory.forEach(p => {
+sel.innerHTML += `<option value="${p.id}">${p.name} (Stock: ${p.inward - p.outward})</option>`;
+});
+}
+
+function onProductSelectChange() {
+const pId = parseInt(document.getElementById('itemSelect').value);
+const prod = inventory.find(x => x.id === pId);
+if (prod) {
+document.getElementById('itemHsn').value = prod.hsn;
+document.getElementById('itemUom').value = prod.uom;
+document.getElementById('itemRate').value = prod.defaultRate;
+}
+}
+
+function handleQtyKeyDown(e) {
+if (e.key === 'Enter') {
+e.preventDefault();
+addItemToCurrentBill();
+}
+}
+
+function addItemToCurrentBill() {
+const pId = parseInt(document.getElementById('itemSelect').value);
+const qty = parseFloat(document.getElementById('itemQty').value);
+const rate = parseFloat(document.getElementById('itemRate').value);
+const hsn = document.getElementById('itemHsn').value;
+const uom = document.getElementById('itemUom').value;
+
+if (!pId || isNaN(qty) || qty <= 0 || isNaN(rate) || rate < 0) {
+alert("Please enter a valid product, quantity, and rate.");
+return;
+}
+
+const prod = inventory.find(x => x.id === pId);
+const taxable = rate * qty;
+let cgst = 0, sgst = 0;
+if (activeShop.isGst) {
+cgst = taxable * 0.09;
+sgst = taxable * 0.09;
+}
+const total = taxable + cgst + sgst;
+
+currentBillItems.push({
+id: prod.id,
+name: prod.name,
+hsn: hsn || prod.hsn,
+uom: uom,
+qty: qty,
+rate: rate,
+taxable: taxable,
+cgst: cgst,
+sgst: sgst,
+total: total
+});
+
+renderBillItemsTable();
+calculateTotals();
+
+document.getElementById('itemSelect').value = '';
+document.getElementById('itemHsn').value = '';
+document.getElementById('itemRate').value = '';
+document.getElementById('itemQty').value = '1';
+document.getElementById('itemSelect').focus();
+}
+
+function renderBillItemsTable() {
+const tbody = document.getElementById('billItemsTableBody');
+tbody.innerHTML = '';
+if (currentBillItems.length === 0) {
+tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-500">No items added yet. Choose a product and press Add.</td></tr>';
+return;
+}
+currentBillItems.forEach((itm, idx) => {
+tbody.innerHTML += `
+<tr class="hover:bg-slate-800/40">
+<td class="p-2.5 font-bold">${itm.name}</td>
+<td class="p-2.5 font-mono text-slate-400">${itm.hsn}</td>
+<td class="p-2.5">${itm.uom}</td>
+<td class="p-2.5 text-center font-bold">${itm.qty}</td>
+<td class="p-2.5 text-right font-mono">₹${itm.rate.toFixed(2)}</td>
+<td class="p-2.5 text-right font-mono text-amber-300 gst-col ${activeShop.isGst ? '' : 'hidden'}">₹${itm.cgst.toFixed(2)}</td>
+<td class="p-2.5 text-right font-mono text-amber-300 gst-col ${activeShop.isGst ? '' : 'hidden'}">₹${itm.sgst.toFixed(2)}</td>
+<td class="p-2.5 text-right font-mono font-bold text-white">₹${itm.total.toFixed(2)}</td>
+<td class="p-2.5 text-center"><button type="button" onclick="removeItem(${idx})" class="text-rose-400 font-bold hover:text-rose-300">✕</button></td>
+</tr>
+`;
+});
+}
+
+function removeItem(idx) {
+currentBillItems.splice(idx, 1);
+renderBillItemsTable();
+calculateTotals();
+}
+
+function calculateTotals() {
+let taxable = 0, cgst = 0, sgst = 0, grand = 0;
+currentBillItems.forEach(i => {
+taxable += i.taxable;
+cgst += i.cgst;
+sgst += i.sgst;
+grand += i.total;
+});
+document.getElementById('totTaxableTxt').textContent = taxable.toFixed(2);
+document.getElementById('totCgstTxt').textContent = cgst.toFixed(2);
+document.getElementById('totSgstTxt').textContent = sgst.toFixed(2);
+document.getElementById('totGrandTxt').textContent = grand.toFixed(2);
+}
+
+function numToWords(num) {
+const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+num = Math.round(num);
+if (num === 0) return 'Zero Rupees Only';
+function convert(n) {
+if (n < 20) return a[n];
+if (n < 100) return b[Math.floor(n / 10)] + ' ' + a[n % 10];
+if (n < 1000) return a[Math.floor(n / 100)] + 'Hundred ' + convert(n % 100);
+if (n < 100000) return convert(Math.floor(n / 1000)) + 'Thousand ' + convert(n % 1000);
+if (n < 10000000) return convert(Math.floor(n / 100000)) + 'Lakh ' + convert(n % 100000);
+return convert(Math.floor(n / 10000000)) + 'Crore ' + convert(n % 10000000);
+}
+return convert(num).trim() + ' Rupees Only.';
+}
+
+// ================= ADVANCED PRINT ENGINE (FIXED A4) =================
+function executeSaveAndPrint() {
+if (currentBillItems.length === 0) {
+alert("Please add at least one item before printing!");
+return;
+}
+
+const invNo = document.getElementById('billInvNumber').value;
+const dateVal = document.getElementById('billDate').value;
+const custName = document.getElementById('billCustName').value || 'Cash Customer';
+const custAddr = document.getElementById('billCustAddress').value || 'Palladam';
+const custGstin = document.getElementById('billCustGstin').value || '-';
+const taxable = parseFloat(document.getElementById('totTaxableTxt').textContent);
+const cgst = parseFloat(document.getElementById('totCgstTxt').textContent);
+const sgst = parseFloat(document.getElementById('totSgstTxt').textContent);
+const grand = parseFloat(document.getElementById('totGrandTxt').textContent);
+const words = numToWords(grand);
+
+// Hide all layouts, display active shop layout
+document.getElementById('layoutShop1').style.display = activeShop.id === 'shop1' ? 'flex' : 'none';
+document.getElementById('layoutShop2').style.display = activeShop.id === 'shop2' ? 'flex' : 'none';
+document.getElementById('layoutShop3').style.display = activeShop.id === 'shop3' ? 'flex' : 'none';
+
+const formattedDate = dateVal.split('-').reverse().join('/');
+
+// Standard A4 Table Filler rows (Total minimum 7 rows for majestic look)
+const minRows = 7;
+const emptyRowCount = Math.max(0, minRows - currentBillItems.length);
+
+if (activeShop.id === 'shop1') {
+document.getElementById('sh1CustName').textContent = custName;
+document.getElementById('sh1CustAddr').textContent = custAddr;
+document.getElementById('sh1CustGstin').textContent = custGstin;
+document.getElementById('sh1InvNo').textContent = invNo;
+document.getElementById('sh1Date').textContent = formattedDate;
+document.getElementById('sh1Taxable').textContent = taxable.toFixed(2);
+document.getElementById('sh1Cgst').textContent = cgst.toFixed(2);
+document.getElementById('sh1Sgst').textContent = sgst.toFixed(2);
+document.getElementById('sh1Grand').textContent = grand.toFixed(2);
+document.getElementById('sh1RupeesWords').textContent = words;
+
+const b = document.getElementById('sh1ItemsBody');
+b.innerHTML = '';
+currentBillItems.forEach((itm, i) => {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #cbd5e1;">
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center;">${i + 1}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; font-weight: bold;">${itm.name}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center; font-family: monospace;">${itm.hsn}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold;">${itm.qty}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center;">${itm.uom}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; text-align: right; font-family: monospace;">${itm.rate.toFixed(2)}</td>
+<td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold;">${itm.taxable.toFixed(2)}</td>
+</tr>
+`;
+});
+// Blank filler rows
+for(let r=0; r<emptyRowCount; r++) {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #f1f5f9;">
+<td style="border-right: 1px solid #000; padding: 12px 4px;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+`;
+}
+} else if (activeShop.id === 'shop2') {
+document.getElementById('sh2CustName').textContent = custName;
+document.getElementById('sh2CustAddr').textContent = custAddr;
+document.getElementById('sh2CustGstin').textContent = custGstin;
+document.getElementById('sh2InvNo').textContent = invNo;
+document.getElementById('sh2Date').textContent = formattedDate;
+document.getElementById('sh2GridTaxable').textContent = taxable.toFixed(2);
+document.getElementById('sh2GridCgst').textContent = cgst.toFixed(2);
+document.getElementById('sh2GridSgst').textContent = sgst.toFixed(2);
+document.getElementById('sh2GridTotTax').textContent = (cgst + sgst).toFixed(2);
+document.getElementById('sh2Grand').textContent = grand.toFixed(2);
+document.getElementById('sh2RupeesWords').textContent = words;
+
+const b = document.getElementById('sh2ItemsBody');
+b.innerHTML = '';
+currentBillItems.forEach((itm, i) => {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #cbd5e1;">
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center;">${i + 1}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; font-weight: bold;">${itm.name}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center;">18%</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center; font-family: monospace;">${itm.hsn}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold;">${itm.qty} ${itm.uom}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; text-align: right; font-family: monospace;">${itm.rate.toFixed(2)}</td>
+<td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold;">${itm.taxable.toFixed(2)}</td>
+</tr>
+`;
+});
+for(let r=0; r<emptyRowCount; r++) {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #f1f5f9;">
+<td style="border-right: 1px solid #000; padding: 12px 4px;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+`;
+}
+} else {
+document.getElementById('sh3CustName').textContent = custName;
+document.getElementById('sh3InvNo').textContent = invNo;
+document.getElementById('sh3Date').textContent = formattedDate;
+document.getElementById('sh3Grand').textContent = grand.toFixed(2);
+document.getElementById('sh3RupeesWords').textContent = words;
+
+const b = document.getElementById('sh3ItemsBody');
+b.innerHTML = '';
+currentBillItems.forEach((itm, i) => {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #cbd5e1;">
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center;">${i + 1}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; font-weight: bold;">${itm.name}</td>
+<td style="border-right: 1px solid #000; padding: 6px 4px; text-align: center; font-weight: bold;">${itm.qty} ${itm.uom}</td>
+<td style="border-right: 1px solid #000; padding: 6px 8px; text-align: right; font-family: monospace;">₹${itm.rate.toFixed(2)}</td>
+<td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold;">₹${itm.total.toFixed(2)}</td>
+</tr>
+`;
+});
+for(let r=0; r<emptyRowCount; r++) {
+b.innerHTML += `
+<tr style="border-bottom: 1px solid #f1f5f9;">
+<td style="border-right: 1px solid #000; padding: 12px 4px;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td style="border-right: 1px solid #000;">&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+`;
+}
+}
+
+// Save to sales register
+savedInvoices.unshift({
+shopId: activeShop.id,
+invoiceNo: invNo,
+date: dateVal,
+customerName: custName,
+customerAddress: custAddr,
+customerGstin: custGstin,
+taxable: taxable,
+cgst: cgst,
+sgst: sgst,
+grand: grand
+});
+localStorage.setItem('ce_all_bills', JSON.stringify(savedInvoices));
+
+// Stock decrement
+currentBillItems.forEach(itm => {
+const p = inventory.find(x => x.id === itm.id);
+if (p) p.outward += itm.qty;
+});
+localStorage.setItem('ce_inventory_v4', JSON.stringify(inventory));
+
+// Native Print Trigger
+window.print();
+
+// Reset
+activeShop.counter++;
+currentBillItems = [];
+renderBillItemsTable();
+calculateTotals();
+refreshInvoiceNumber();
+renderStockTable();
+renderSalesReports();
+}
+
+// ================= MASTER DATA METHODS =================
+function saveSupplierMaster() {
+const name = document.getElementById('mSupName').value.trim();
+const gst = document.getElementById('mSupGst').value.trim();
+const phone = document.getElementById('mSupPhone').value.trim();
+const email = document.getElementById('mSupEmail').value.trim();
+const addr = document.getElementById('mSupAddr').value.trim();
+
+if (!name) { alert("Supplier Name is required!"); return; }
+
+suppliers.push({ id: Date.now(), name, gstin: gst, phone, email, addr });
+localStorage.setItem('ce_suppliers', JSON.stringify(suppliers));
+renderMasterTables();
+
+document.getElementById('mSupName').value = '';
+document.getElementById('mSupGst').value = '';
+document.getElementById('mSupPhone').value = '';
+document.getElementById('mSupEmail').value = '';
+document.getElementById('mSupAddr').value = '';
+}
+
+function saveProductMaster() {
+const name = document.getElementById('mProdName').value.trim();
+const hsn = document.getElementById('mProdHsn').value.trim();
+const uom = document.getElementById('mProdUom').value;
+const rate = parseFloat(document.getElementById('mProdRate').value);
+const stock = parseFloat(document.getElementById('mProdStock').value) || 0;
+
+if (!name || !hsn || isNaN(rate)) { alert("Product Name, HSN and Rate are required!"); return; }
+
+inventory.push({ id: Date.now(), name, hsn, uom, defaultRate: rate, inward: stock, outward: 0 });
+localStorage.setItem('ce_inventory_v4', JSON.stringify(inventory));
+renderMasterTables();
+populateDropdown();
+renderStockTable();
+
+document.getElementById('mProdName').value = '';
+document.getElementById('mProdHsn').value = '';
+document.getElementById('mProdRate').value = '';
+document.getElementById('mProdStock').value = '';
+}
+
+function renderMasterTables() {
+const sBody = document.getElementById('mSupplierTableBody');
+sBody.innerHTML = '';
+suppliers.forEach(s => {
+sBody.innerHTML += `<tr><td class="p-2 font-bold">${s.name}</td><td class="p-2 font-mono">${s.gstin || '-'}</td><td class="p-2">${s.phone || '-'}</td></tr>`;
+});
+
+const pBody = document.getElementById('mProductTableBody');
+pBody.innerHTML = '';
+inventory.forEach(p => {
+pBody.innerHTML += `<tr><td class="p-2 font-bold">${p.name}</td><td class="p-2 font-mono">${p.hsn}</td><td class="p-2 font-mono">₹${p.defaultRate}</td><td class="p-2 font-bold">${p.inward - p.outward} ${p.uom}</td></tr>`;
+});
+}
+
+function renderStockTable() {
+const tbody = document.getElementById('stockTableBody');
+tbody.innerHTML = '';
+inventory.forEach(p => {
+const rem = p.inward - p.outward;
+tbody.innerHTML += `
+<tr class="hover:bg-slate-800/40">
+<td class="p-3 font-bold">${p.name}</td>
+<td class="p-3 font-mono text-slate-400">${p.hsn}</td>
+<td class="p-3">${p.uom}</td>
+<td class="p-3 text-right font-mono">₹${p.defaultRate}</td>
+<td class="p-3 text-center text-emerald-400 font-bold">${p.inward}</td>
+<td class="p-3 text-center text-rose-400 font-bold">${p.outward}</td>
+<td class="p-3 text-center font-bold text-amber-300 font-mono">${rem}</td>
+</tr>
+`;
+});
+}
+
+function renderSalesReports() {
+const tbody = document.getElementById('reportsTableBody');
+tbody.innerHTML = '';
+
+const fromD = document.getElementById('repFromDate').value;
+const toD = document.getElementById('repToDate').value;
+
+const filtered = savedInvoices.filter(inv => {
+if (inv.shopId !== activeShop.id) return false;
+if (fromD && inv.date < fromD) return false;
+if (toD && inv.date > toD) return false;
+return true;
+});
+
+if (filtered.length === 0) {
+tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-500">No records found for this shop and date range.</td></tr>';
+return;
+}
+
+filtered.forEach(inv => {
+tbody.innerHTML += `
+<tr class="hover:bg-slate-800/40">
+<td class="p-3 font-mono font-bold text-amber-300">${inv.invoiceNo}</td>
+<td class="p-3 font-mono text-slate-400">${inv.date}</td>
+<td class="p-3 font-bold">${inv.customerName}</td>
+<td class="p-3 font-mono">${inv.customerGstin || '-'}</td>
+<td class="p-3 text-right font-mono">₹${inv.taxable.toFixed(2)}</td>
+<td class="p-3 text-right font-mono text-amber-400">₹${inv.cgst.toFixed(2)}</td>
+<td class="p-3 text-right font-mono text-amber-400">₹${inv.sgst.toFixed(2)}</td>
+<td class="p-3 text-right font-mono font-bold text-emerald-400">₹${inv.grand.toFixed(2)}</td>
+</tr>
+`;
+});
+}
+
+function exportSalesExcel() {
+const fromD = document.getElementById('repFromDate').value;
+const toD = document.getElementById('repToDate').value;
+const filtered = savedInvoices.filter(inv => {
+if (inv.shopId !== activeShop.id) return false;
+if (fromD && inv.date < fromD) return false;
+if (toD && inv.date > toD) return false;
+return true;
+});
+
+let csv = `Invoice No,Date,Customer Name,Customer Address,GSTIN,Taxable Value,CGST,SGST,Grand Total\n`;
+filtered.forEach(i => {
+csv += `"${i.invoiceNo}","${i.date}","${i.customerName}","${i.customerAddress}","${i.customerGstin}",${i.taxable},${i.cgst},${i.sgst},${i.grand}\n`;
+});
+
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = `${activeShop.id}_Sales_Register_${new Date().toISOString().split('T')[0]}.csv`;
+link.click();
+}
+
+function switchTab(t) {
+document.getElementById('tabBilling').style.display = 'none';
+document.getElementById('tabMaster').style.display = 'none';
+document.getElementById('tabStock').style.display = 'none';
+document.getElementById('tabReports').style.display = 'none';
+
+['tabBtnBilling', 'tabBtnMaster', 'tabBtnStock', 'tabBtnReports'].forEach(id => {
+document.getElementById(id).className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800";
+});
+
+if (t === 'billing') {
+document.getElementById('tabBilling').style.display = 'block';
+document.getElementById('tabBtnBilling').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black";
+} else if (t === 'master') {
+document.getElementById('tabMaster').style.display = 'block';
+document.getElementById('tabBtnMaster').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black";
+} else if (t === 'stock') {
+document.getElementById('tabStock').style.display = 'block';
+document.getElementById('tabBtnStock').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black";
+} else if (t === 'reports') {
+document.getElementById('tabReports').style.display = 'block';
+document.getElementById('tabBtnReports').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-black";
+}
+}
+</script>
+<script>
+/* ===== v5 UPGRADE LAYER: stock safety, dashboard, backup, search, persistent numbering ===== */
+(function(){
+const $=id=>document.getElementById(id), LOW=10;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const inr=n=>'₹'+(+n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const toast=(m,bad)=>{const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)};
+
+/* 1. Invoice counters survive refresh (were reset to 1 on every reload) */
+try{const c=JSON.parse(localStorage.getItem('ce_counters')||'{}');for(const k in c)if(SHOPS[k])SHOPS[k].counter=c[k]}catch(e){}
+const saveCounters=()=>localStorage.setItem('ce_counters',JSON.stringify({shop1:SHOPS.shop1.counter,shop2:SHOPS.shop2.counter,shop3:SHOPS.shop3.counter}));
+const persist=()=>{localStorage.setItem('ce_all_bills',JSON.stringify(savedInvoices));localStorage.setItem('ce_inventory_v4',JSON.stringify(inventory));saveCounters()};
+
+/* 2. Inject UI */
+$('tabBilling').insertAdjacentHTML('afterbegin','<div id="dashStrip" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div><datalist id="custList"></datalist>');
+$('billCustName').setAttribute('list','custList');
+$('tabStock').querySelector('h3').insertAdjacentHTML('afterend','<div class="flex flex-wrap gap-3 items-center"><input id="stockSearch" oninput="renderStockTable()" placeholder="Search product / HSN…" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white w-64"><span id="stockSummary" class="text-xs text-slate-400"></span></div>');
+const hdr=document.querySelector('header > div:last-child');
+hdr.insertAdjacentHTML('afterbegin','<button onclick="backupData()" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-600/50 text-emerald-300 hover:bg-emerald-900/30">⬇ Backup</button><label class="px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-600/50 text-blue-300 hover:bg-blue-900/30 cursor-pointer">⬆ Restore<input type="file" accept=".json" class="hidden" onchange="restoreData(event)"></label>');
+const pb=document.querySelector('#tabReports button[onclick="window.print()"]');
+if(pb)pb.setAttribute('onclick','printRegister()');
+
+/* 3. Dashboard */
+window.refreshDash=function(){
+ const mine=savedInvoices.filter(i=>i.shopId===activeShop.id),t=today(),sum=a=>a.reduce((s,i)=>s+i.grand,0);
+ const td=mine.filter(i=>i.date===t),mo=mine.filter(i=>(i.date||'').startsWith(t.slice(0,7)));
+ const low=inventory.filter(p=>p.inward-p.outward<=LOW).length;
+ const card=(l,v,s,c)=>`<div class="dash-card"><div class="text-[11px] text-slate-400 uppercase tracking-wider">${l}</div><div class="text-lg font-black font-mono ${c}">${v}</div><div class="text-[11px] text-slate-500">${s}</div></div>`;
+ $('dashStrip').innerHTML=card("Today's Sales",inr(sum(td)),td.length+' bills','text-emerald-400')+card('This Month',inr(sum(mo)),mo.length+' bills','text-amber-300')+card('Total Bills',mine.length,'this branch','text-blue-300')+card('Low / Out of Stock',low,'items ≤ '+LOW,low?'text-rose-400':'text-emerald-400');
+ const names=[...new Set(mine.map(i=>i.customerName).filter(n=>n&&n!=='Cash Customer'))];
+ $('custList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
+};
+$('billCustName').addEventListener('change',e=>{
+ const i=savedInvoices.find(x=>x.customerName===e.target.value);
+ if(i){if(!$('billCustAddress').value)$('billCustAddress').value=i.customerAddress||'';if(!$('billCustGstin').value&&i.customerGstin!=='-')$('billCustGstin').value=i.customerGstin||''}
+});
+
+/* 4. Wrapped core functions */
+const _launch=launchShop;
+window.launchShop=function(k){_launch(k);refreshDash()};
+window.refreshInvoiceNumber=function(){$('billInvNumber').value=activeShop.id==='shop1'?`${activeShop.counter}`:`${activeShop.series}${activeShop.counter}`};
+
+const _add=addItemToCurrentBill;
+window.addItemToCurrentBill=function(){
+ const id=parseInt($('itemSelect').value),q=parseFloat($('itemQty').value),p=inventory.find(x=>x.id===id);
+ if(p&&q>0){const used=currentBillItems.filter(i=>i.id===id).reduce((a,i)=>a+i.qty,0),av=p.inward-p.outward-used;
+  if(p.inward>0&&q>av&&!confirm(`Only ${av} ${p.uom} of "${p.name}" in stock. Add anyway?`))return}
+ _add();
+};
+
+const _save=executeSaveAndPrint;
+window.executeSaveAndPrint=function(){
+ if(!currentBillItems.length){alert('Please add at least one item before printing!');return}
+ const g=$('billCustGstin').value.trim().toUpperCase();
+ if(g&&!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){alert('Customer GSTIN format is invalid. Example: 33AWFPR5243D1ZD');return}
+ $('billCustGstin').value=g;
+ const no=$('billInvNumber').value.trim();
+ if(!no){alert('Invoice number is required');return}
+ if(savedInvoices.some(i=>i.shopId===activeShop.id&&i.invoiceNo===no)&&!confirm(`Invoice "${no}" already exists for this branch. Continue?`))return;
+ const items=JSON.parse(JSON.stringify(currentBillItems)),n=savedInvoices.length;
+ _save();
+ if(savedInvoices.length>n){savedInvoices[0].items=items;persist();toast('Invoice '+no+' saved')}
+ refreshDash();
+};
+
+const _sup=saveSupplierMaster,_prod=saveProductMaster;
+window.saveSupplierMaster=function(){['mSupName','mSupAddr'].forEach(i=>$(i).value=$(i).value.replace(/[<>]/g,''));_sup();toast('Supplier saved')};
+window.saveProductMaster=function(){$('mProdName').value=$('mProdName').value.replace(/[<>]/g,'');_prod();refreshDash();toast('Product saved')};
+
+/* 5. Stock tab: search, status, add-stock, edit-rate, valuation */
+window.addStock=function(id){const p=inventory.find(x=>x.id===id);const v=parseFloat(prompt(`Purchase inward qty for "${p.name}" (${p.uom}):`));
+ if(v>0){p.inward+=v;persist();renderStockTable();populateDropdown();renderMasterTables();refreshDash();toast(`+${v} ${p.uom} added`)}};
+window.editRate=function(id){const p=inventory.find(x=>x.id===id);const v=parseFloat(prompt(`New selling rate for "${p.name}":`,p.defaultRate));
+ if(v>=0){p.defaultRate=v;persist();renderStockTable();renderMasterTables();toast('Rate updated')}};
+window.renderStockTable=function(){
+ const q=(($('stockSearch')||{}).value||'').toLowerCase(),tb=$('stockTableBody');
+ tb.closest('table').tHead.innerHTML='<tr><th class="p-3">Product Name</th><th class="p-3">HSN</th><th class="p-3">UOM</th><th class="p-3 text-right">Rate (₹)</th><th class="p-3 text-center">Inward</th><th class="p-3 text-center">Outward</th><th class="p-3 text-center">Balance</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Actions</th></tr>';
+ let val=0;tb.innerHTML='';
+ inventory.forEach(p=>{const r=p.inward-p.outward;val+=Math.max(r,0)*p.defaultRate;
+  if(q&&!(p.name.toLowerCase().includes(q)||String(p.hsn).includes(q)))return;
+  const s=r<=0?['OUT OF STOCK','bg-rose-500/20 text-rose-300']:r<=LOW?['LOW','bg-amber-500/20 text-amber-300']:['OK','bg-emerald-500/15 text-emerald-300'];
+  tb.innerHTML+=`<tr class="hover:bg-slate-800/40"><td class="p-3 font-bold">${esc(p.name)}</td><td class="p-3 font-mono text-slate-400">${esc(p.hsn)}</td><td class="p-3">${p.uom}</td><td class="p-3 text-right font-mono">₹${p.defaultRate}</td><td class="p-3 text-center text-emerald-400 font-bold">${p.inward}</td><td class="p-3 text-center text-rose-400 font-bold">${p.outward}</td><td class="p-3 text-center font-bold text-amber-300 font-mono">${r}</td><td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s[1]}">${s[0]}</span></td><td class="p-3 text-center whitespace-nowrap"><button onclick="addStock(${p.id})" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px]">+ Stock</button> <button onclick="editRate(${p.id})" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-[11px]">Rate</button></td></tr>`});
+ $('stockSummary').innerHTML=`Items: <b class="text-white">${inventory.length}</b> &nbsp;|&nbsp; Stock value (at selling rate): <b class="text-amber-300">${inr(val)}</b>`;
+};
+const _rm=renderMasterTables;
+window.renderMasterTables=function(){_rm();$('mSupplierTableBody').querySelectorAll('td').forEach(()=>{})};
+
+/* 6. Sales register with totals + safe print */
+window.renderSalesReports=function(){
+ const tb=$('reportsTableBody'),f=$('repFromDate').value,t=$('repToDate').value;
+ const rows=savedInvoices.filter(i=>i.shopId===activeShop.id&&(!f||i.date>=f)&&(!t||i.date<=t));
+ if(!rows.length){tb.innerHTML='<tr><td colspan="8" class="p-6 text-center text-slate-500">No records found for this shop and date range.</td></tr>';return}
+ const S=k=>rows.reduce((a,i)=>a+(+i[k]||0),0);
+ tb.innerHTML=rows.map(i=>`<tr class="hover:bg-slate-800/40"><td class="p-3 font-mono font-bold text-amber-300">${esc(i.invoiceNo)}</td><td class="p-3 font-mono text-slate-400">${esc(i.date)}</td><td class="p-3 font-bold">${esc(i.customerName)}</td><td class="p-3 font-mono">${esc(i.customerGstin||'-')}</td><td class="p-3 text-right font-mono">${inr(i.taxable)}</td><td class="p-3 text-right font-mono text-amber-400">${inr(i.cgst)}</td><td class="p-3 text-right font-mono text-amber-400">${inr(i.sgst)}</td><td class="p-3 text-right font-mono font-bold text-emerald-400">${inr(i.grand)}</td></tr>`).join('')
+ +`<tr class="bg-slate-950 font-black"><td class="p-3" colspan="4">TOTAL (${rows.length} bills)</td><td class="p-3 text-right font-mono">${inr(S('taxable'))}</td><td class="p-3 text-right font-mono text-amber-400">${inr(S('cgst'))}</td><td class="p-3 text-right font-mono text-amber-400">${inr(S('sgst'))}</td><td class="p-3 text-right font-mono text-emerald-400">${inr(S('grand'))}</td></tr>`;
+};
+window.printRegister=function(){document.body.classList.add('print-report');window.print()};
+window.addEventListener('afterprint',()=>document.body.classList.remove('print-report'));
+
+/* 7. Backup / Restore */
+window.doBackup=function(){
+ const d={bills:savedInvoices,inventory,suppliers:JSON.parse(localStorage.getItem('ce_suppliers')||'[]'),counters:JSON.parse(localStorage.getItem('ce_counters')||'{}'),at:new Date().toISOString()};
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,1)],{type:'application/json'}));
+ a.download='CityElectricals_Backup_'+today()+'.json';a.click();toast('Backup downloaded');
+};
+window.restoreData=function(e){
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.bills||!d.inventory)throw 0;
+  if(!confirm('This REPLACES current data with the backup. Continue?'))return;
+  localStorage.setItem('ce_all_bills',JSON.stringify(d.bills));localStorage.setItem('ce_inventory_v4',JSON.stringify(d.inventory));
+  localStorage.setItem('ce_suppliers',JSON.stringify(d.suppliers||[]));localStorage.setItem('ce_counters',JSON.stringify(d.counters||{}));location.reload()}
+  catch(x){alert('Invalid backup file')}};
+ r.readAsText(f);
+};
+
+/* 8. Keyboard shortcuts */
+document.addEventListener('keydown',e=>{
+ if($('mainWorkspace').style.display!=='flex')return;
+ if(e.key==='F2'){e.preventDefault();switchTab('billing');$('itemSelect').focus()}
+ if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();executeSaveAndPrint()}
+});
+})();
+</script>
+<script>
+/* ===== v5.1 FIXES: single-shop print + Balu Tech login ===== */
+(function(){
+const $=id=>document.getElementById(id);
+/* FIX 1: mark ONLY the active shop's layout so the print CSS hides the other two */
+const _ex=window.executeSaveAndPrint;
+window.executeSaveAndPrint=function(){
+ ['Shop1','Shop2','Shop3'].forEach(k=>$('layout'+k).classList.toggle('active-layout',k.toLowerCase()===activeShop.id));
+ _ex();
+};
+/* FIX 2: Balu Tech login (works without Tailwind, ignores caps/spaces, changeable password) */
+const PK='ce_balu_pw',DEF='balu@123',norm=s=>String(s==null?'':s).trim().toLowerCase();
+const getPw=()=>localStorage.getItem(PK)||DEF;
+const inp=$('baluPassInput');
+['autocapitalize','autocorrect'].forEach(a=>inp.setAttribute(a,'off'));
+inp.setAttribute('autocomplete','off');inp.setAttribute('spellcheck','false');
+inp.parentElement.insertAdjacentHTML('beforeend','<label style="font-size:11px;color:#94a3b8;display:block;margin-top:8px;cursor:pointer"><input type="checkbox" onchange="document.getElementById(\'baluPassInput\').type=this.checked?\'text\':\'password\'"> Show password</label><a href="#" onclick="changeBaluPassword();return false" style="font-size:11px;color:#34d399;display:inline-block;margin-top:6px;text-decoration:underline">Change password</a>');
+window.promptBaluTech=function(){
+ const m=$('baluPasswordModal');$('baluPassError').style.display='none';inp.value='';inp.type='password';
+ m.style.cssText='display:flex;position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;align-items:center;justify-content:center;background:rgba(0,0,0,.8);padding:16px';
+ m.firstElementChild.style.cssText+=';width:100%;max-width:24rem';
+ setTimeout(()=>inp.focus(),80);
+};
+window.verifyBaluPassword=function(e){
+ if(e&&e.preventDefault)e.preventDefault();
+ if(norm(inp.value)!==norm(getPw())){const er=$('baluPassError');er.classList.remove('hidden');er.style.display='block';inp.select();return false}
+ try{closeBaluModal();launchShop('shop3')}catch(x){alert('Could not open Balu Tech: '+x.message)}
+ return false;
+};
+window.changeBaluPassword=function(){
+ const o=prompt('Enter CURRENT password:');if(o===null)return;
+ if(norm(o)!==norm(getPw())){alert('Current password is wrong');return}
+ const n=prompt('Enter NEW password (min 4 characters):');
+ if(!n||n.trim().length<4){alert('Password not changed');return}
+ localStorage.setItem(PK,n.trim());alert('Balu Tech password changed');
+};
+})();
+</script>
+<script>
+/* ===== v7: 6 background themes + CE monogram + theme switcher ===== */
+(function(){
+const $=id=>document.getElementById(id),W=1600,H=900;
+const rnd=s=>()=>(s=s*16807%2147483647)/2147483647;
+const svg=(b,d='')=>`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>${d}</defs>${b}</svg>`;
+const rot=(x,y,d)=>`<animateTransform attributeName="transform" type="rotate" from="0 ${x} ${y}" to="${d>0?360:-360} ${x} ${y}" dur="${Math.abs(d)}s" repeatCount="indefinite"/>`;
+
+/* 1. Mechanical gears, glowing orange hubs */
+function gears(){let o=`<rect width="${W}" height="${H}" fill="url(#gbg)"/>`;
+ [[170,150,130,14,60],[420,290,80,10,-40],[1380,200,150,16,80],[1150,640,100,12,-50],[300,720,140,15,70],[800,470,60,8,-30],[1500,740,90,11,45],[720,100,70,9,-35],[1000,260,50,7,30],[560,560,45,7,-28]].forEach(([x,y,R,t,d])=>{
+  let p='',ri=R*.82,st=2*Math.PI/t;
+  for(let k=0;k<t;k++)[[ri,0],[R,.15],[R,.45],[ri,.62]].forEach(([q,a])=>{const g=k*st+a*st;p+=(p?'L':'M')+(x+q*Math.cos(g)).toFixed(1)+' '+(y+q*Math.sin(g)).toFixed(1)});
+  o+=`<g>${rot(x,y,d)}<path d="${p}Z" fill="url(#gb)" stroke="#8a4b1a" stroke-width="3"/><circle cx="${x}" cy="${y}" r="${R*.62}" fill="none" stroke="#5a3010" stroke-width="${R*.08}"/>`;
+  for(let k=0;k<6;k++)o+=`<line x1="${x}" y1="${y}" x2="${x+R*.6*Math.cos(k*1.047)}" y2="${y+R*.6*Math.sin(k*1.047)}" stroke="#4a2a12" stroke-width="${R*.07}"/>`;
+  o+=`<circle cx="${x}" cy="${y}" r="${R*.3}" fill="url(#og)"><animate attributeName="opacity" values="1;.7;1" dur="2.5s" repeatCount="indefinite"/></circle></g>`});
+ return svg(o,'<radialGradient id="gbg" cx=".5" cy=".5" r=".8"><stop offset="0" stop-color="#2a170a"/><stop offset="1" stop-color="#0a0503"/></radialGradient><radialGradient id="og"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ff9a1f"/><stop offset="1" stop-color="#b43c00"/></radialGradient><linearGradient id="gb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3d28"/><stop offset="1" stop-color="#1c120a"/></linearGradient>')}
+
+/* 2 & 5. Circuit board (bright cyan-green / yellow vector microchip) */
+function circuit(P){const r=rnd(P.s);let g='',a='';
+ for(let i=0;i<90;i++){let x=Math.round(r()*40)*40,y=Math.round(r()*22)*40,d=`M${x} ${y}`;
+  for(let k=0;k<2+r()*4;k++){const m=r()*3|0,l=(1+r()*4|0)*40,s=r()<.5?-1:1;if(m==0)x+=s*l;else if(m==1)y+=s*l;else{x+=s*l;y+=s*l}d+=`L${x} ${y}`}
+  const c=r()<.5?P.l1:P.l2;
+  g+=`<path d="${d}" stroke="${c}"${i%4==0?` stroke-dasharray="8 16"><animate attributeName="stroke-dashoffset" from="0" to="-48" dur="${2+i%3}s" repeatCount="indefinite"/></path>`:'/>'}<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="${c}" stroke-width="3"/>`}
+ for(let i=0;i<7;i++){const x=100+r()*1300|0,y=80+r()*680|0,w=90+r()*90|0,h=w*.8|0;
+  a+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${P.c}" stroke="${P.cs}" stroke-width="3"/><rect x="${x+14}" y="${y+14}" width="${w-28}" height="${h-28}" rx="4" fill="none" stroke="${P.l1}" stroke-width="2"/>`;
+  for(let k=0;k<7;k++){const px=x+10+k*(w-20)/6;a+=`<path d="M${px} ${y}v-14M${px} ${y+h}v14" stroke="${P.cs}" stroke-width="4"/>`}}
+ return svg(`<rect width="${W}" height="${H}" fill="url(#cbg)"/><g fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".2" stroke-width="10">${g}</g><g fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${g}</g>${a}`,`<radialGradient id="cbg" cx=".5" cy=".5" r=".8"><stop offset="0" stop-color="${P.b1}"/><stop offset="1" stop-color="${P.b2}"/></radialGradient>`)}
+const CB=()=>circuit({s:11,b1:'#06433a',b2:'#010d0b',l1:'#19f5c0',l2:'#22d3ee',c:'#062a28',cs:'#14b8a6'});
+const YC=()=>circuit({s:23,b1:'#fde047',b2:'#b45309',l1:'#92400e',l2:'#713f12',c:'#facc15',cs:'#78350f'});
+
+/* 3. Teal humanoid AI robot */
+function robot(){const r=rnd(5);let o=`<rect width="${W}" height="${H}" fill="url(#rbg)"/>`;
+ for(let i=0;i<70;i++)o+=`<circle cx="${r()*W|0}" cy="${r()*H|0}" r="${1+r()*3|0}" fill="#5eead4" opacity=".4"/>`;
+ for(let i=1;i<6;i++)o+=`<circle cx="1150" cy="330" r="${150+i*55}" fill="none" stroke="#2dd4bf" stroke-width="1.5" opacity="${.55-i*.08}" stroke-dasharray="${i*6} ${i*10}">${rot(1150,330,i%2?40+i*5:-40-i*5)}</circle>`;
+ o+=`<g transform="translate(850 40)"><line x1="300" y1="20" x2="300" y2="75" stroke="#5eead4" stroke-width="6"/><circle cx="300" cy="16" r="11" fill="url(#eye)"/>
+<rect x="165" y="165" width="28" height="90" rx="12" fill="url(#mt)"/><rect x="407" y="165" width="28" height="90" rx="12" fill="url(#mt)"/>
+<rect x="190" y="72" width="220" height="250" rx="75" fill="url(#mt)" stroke="#5eead4" stroke-width="3"/>
+<rect x="212" y="150" width="176" height="74" rx="37" fill="#021416" stroke="#2dd4bf" stroke-width="3"/>
+<ellipse cx="262" cy="187" rx="22" ry="13" fill="url(#eye)"><animate attributeName="ry" values="13;2;13" dur="5s" repeatCount="indefinite"/></ellipse><ellipse cx="338" cy="187" rx="22" ry="13" fill="url(#eye)"><animate attributeName="ry" values="13;2;13" dur="5s" repeatCount="indefinite"/></ellipse>
+<path d="M255 268h90M262 281h76M270 294h60M215 110q85-30 170 0" fill="none" stroke="#2dd4bf" stroke-width="5" stroke-linecap="round"/>
+<rect x="262" y="320" width="76" height="52" fill="#0b3c40" stroke="#2dd4bf" stroke-width="2"/>
+<path d="M20 800L42 455Q60 385 150 375L262 360H338L450 375Q540 385 558 455L580 800Z" fill="url(#mt)" stroke="#5eead4" stroke-width="3"/>
+<circle cx="300" cy="530" r="52" fill="#021416" stroke="#2dd4bf" stroke-width="4"/><circle cx="300" cy="530" r="30" fill="url(#eye)"><animate attributeName="opacity" values="1;.5;1" dur="2s" repeatCount="indefinite"/></circle>
+<circle cx="85" cy="455" r="42" fill="url(#mt)" stroke="#5eead4" stroke-width="3"/><circle cx="515" cy="455" r="42" fill="url(#mt)" stroke="#5eead4" stroke-width="3"/>
+<path d="M150 600v200M450 600v200M200 640h200" stroke="#2dd4bf" stroke-width="2" opacity=".6"/></g>`;
+ return svg(o,'<linearGradient id="rbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#064e54"/><stop offset="1" stop-color="#010d0f"/></linearGradient><linearGradient id="mt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a9d9d"/><stop offset="1" stop-color="#0a3236"/></linearGradient><radialGradient id="eye"><stop offset="0" stop-color="#e6fffb"/><stop offset=".5" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0d9488"/></radialGradient>')}
+
+/* 4. Tropical jungle + stone wall */
+function jungle(){const r=rnd(9);let o=`<rect width="${W}" height="${H}" fill="#1a2418"/>`;
+ for(let y=0,w0=0;y<H;y+=64,w0++){let x=-(w0%2)*80-r()*40;while(x<W){const w=130+r()*110,c=['#4a5446','#3f4a3d','#566052','#38423a','#4d5a47'][r()*5|0];
+  o+=`<rect x="${x|0}" y="${y}" width="${w|0}" height="62" rx="5" fill="${c}" stroke="#202a20" stroke-width="3"/>`;
+  if(r()<.25)o+=`<rect x="${x+8|0}" y="${y+50}" width="${w*.6|0}" height="10" rx="5" fill="#3f7d2c" opacity=".55"/>`;x+=w+3}}
+ const fr=(x,y,L,a,c)=>{let s=`<g transform="translate(${x} ${y}) rotate(${a})"><path d="M0 0Q${L/2} ${-L*.3} ${L} ${L*.05}" fill="none" stroke="#0d3b1a" stroke-width="7"/>`;
+  for(let i=1;i<=14;i++){const t=i/15,px=t*(1-t)*L+t*t*L,py=-2*t*(1-t)*L*.3+t*t*L*.05,an=Math.atan2(-.6*L*(1-t)+.7*L*t,L)*180/Math.PI,l=L*.3*(1-t*.55);
+   [62,-62].forEach(k=>s+=`<path d="M0 0Q${l/2} -9 ${l} 0Q${l/2} 9 0 0" transform="translate(${px.toFixed(0)} ${py.toFixed(0)}) rotate(${(an+k).toFixed(0)})" fill="${c}"/>`)}
+  return s+'</g>'};
+ const G=['#14532d','#166534','#15803d','#22c55e','#0f3d22'];
+ [[-20,-20,700,35],[-20,40,600,62],[0,0,520,8],[1620,-20,700,145],[1620,60,600,118],[1600,0,500,172],[-20,920,720,-35],[-20,880,600,-62],[1620,920,720,-145],[1620,880,600,-118]].forEach(([x,y,L,a],i)=>o+=fr(x,y,L,a,G[i%5]));
+ for(let i=0;i<7;i++){const x=(i<4?60+r()*260:1300+r()*240)|0,y=(i%2?120+r()*160:640+r()*160)|0;o+=`<circle cx="${x}" cy="${y}" r="26" fill="#ec4899"/><circle cx="${x}" cy="${y}" r="10" fill="#fde047"/>`}
+ return svg(o)}
+
+/* 6. Blue geometric low-poly */
+function geo(){const r=rnd(3),C=18,Rw=10,cw=W/C,ch=H/Rw,P=[];
+ for(let j=0;j<=Rw;j++){P[j]=[];for(let i=0;i<=C;i++)P[j][i]=[i*cw+(i&&i<C?(r()-.5)*cw*.6:0),j*ch+(j&&j<Rw?(r()-.5)*ch*.6:0)]}
+ let o='';
+ for(let j=0;j<Rw;j++)for(let i=0;i<C;i++){const a=P[j][i],b=P[j][i+1],c=P[j+1][i+1],d=P[j+1][i];
+  [[a,b,c],[a,c,d]].forEach(t=>o+=`<polygon points="${t.map(p=>p.map(Math.round)).join(' ')}" fill="hsl(${212+r()*18|0} 85% ${28+(1-t[0][0]/W)*20+r()*12|0}%)" stroke="#60a5fa" stroke-opacity=".15"/>`)}
+ for(let i=0;i<6;i++){const x=150+r()*1300|0,y=100+r()*700|0,s=40+r()*70|0;
+  o+=`<polygon points="${x},${y-s} ${x+s},${y+s*.6|0} ${x-s},${y+s*.6|0}" fill="none" stroke="#bae6fd" stroke-width="3" opacity=".6"><animateTransform attributeName="transform" type="translate" values="0 0;0 -26;0 0" dur="${5+i}s" repeatCount="indefinite"/></polygon>`}
+ return svg(o)}
+
+const BG=[CB];
+const V=(bg,card,card2,bd,a,a2,g1,g2,sc)=>({bg,card,card2,bd,a,a2,g1,g2,scrim:sc});
+const TH=[
+ {n:'Bright Circuit Board',c:'#19f5c0',v:V('#02100c','rgba(5,28,24,.92)','#04201a','rgba(25,245,192,.3)','#10e6b4','#b6ffe9','rgba(25,245,192,.18)','rgba(34,211,238,.12)',.3)}];
+
+document.body.insertAdjacentHTML('afterbegin','<div id="bgLayer"></div>');
+document.body.insertAdjacentHTML('beforeend','<button id="themeBtn" onclick="document.getElementById(\'themePanel\').classList.toggle(\'open\')">🎨 Theme</button><div id="themePanel"></div>');
+window.setCeTheme=function(i){
+ const t=TH[i],s=document.documentElement.style;
+ for(const k in t.v)s.setProperty('--'+k,t.v[k]);
+ $('bgLayer').innerHTML=BG[i]();
+ try{localStorage.setItem('ce_theme',i)}catch(e){}
+ $('themePanel').innerHTML=TH.map((x,j)=>`<button onclick="setCeTheme(${j})" class="${j==i?'on':''}"><i style="background:${x.c}"></i>${j+1}. ${x.n}</button>`).join('');
+};
+let sv=0;try{sv=+localStorage.getItem('ce_theme')||0}catch(e){}
+setCeTheme(sv>=0&&sv<TH.length?sv:0);
+})();
+</script>
+<script>
+(function(){
+document.body.insertAdjacentHTML('beforeend','<div id="ceAsk"><div class="box"><div class="t">Backup</div><p id="ceAskMsg"></p><div class="b"><button id="ceYes">Yes</button><button id="ceNo">No</button></div></div></div>');
+const m=document.getElementById('ceAsk'),close=()=>m.classList.remove('open');let cb=null;
+document.getElementById('ceYes').onclick=()=>{close();if(cb)cb()};
+document.getElementById('ceNo').onclick=close;
+m.addEventListener('click',e=>{if(e.target===m)close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open'))close()});
+window.ceAsk=(msg,f)=>{document.getElementById('ceAskMsg').textContent=msg;cb=f;m.classList.add('open');document.getElementById('ceYes').focus()};
+window.backupData=()=>ceAsk('Do you want to download a backup of all shop data now?',window.doBackup);
+})();
+</script>
+<script>
+(function(){
+const mode=on=>{document.body.classList.toggle('billing-mode',on);document.querySelectorAll('svg').forEach(v=>{if(v.pauseAnimations){on?v.pauseAnimations():v.unpauseAnimations()}})};
+const L=window.launchShop,R=window.returnToShopSelect;
+window.launchShop=function(k){L(k);mode(true)};
+window.returnToShopSelect=function(){R();mode(false)};
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+/* ===== v10: pro bill copies, Edit/View/Print flow, autocomplete, stock register, reports ===== */
+(function(){
+const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f2=n=>(+n||0).toFixed(2),dmy=d=>(d||'').split('-').reverse().join('/');
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+let led=[];try{led=JSON.parse(localStorage.getItem('ce_stock_ledger')||'[]')}catch(e){}
+let CUST=null;try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'null')}catch(e){}
+if(!Array.isArray(CUST)||(!CUST.length&&savedInvoices.length)){CUST=[];savedInvoices.slice().reverse().forEach(v=>{const n=(v.customerName||'').trim();if(!n||n==='Cash Customer')return;const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase()),g=v.customerGstin&&v.customerGstin!=='-'?v.customerGstin:'';if(c){c.addr=v.customerAddress||c.addr;if(g)c.gstin=g}else CUST.push({id:Date.now()+Math.random(),name:n,addr:v.customerAddress||'',gstin:g})});localStorage.setItem('ce_customers',JSON.stringify(CUST))}
+const persist=()=>{localStorage.setItem('ce_all_bills',JSON.stringify(savedInvoices));localStorage.setItem('ce_inventory_v4',JSON.stringify(inventory));localStorage.setItem('ce_stock_ledger',JSON.stringify(led));localStorage.setItem('ce_counters',JSON.stringify({shop1:SHOPS.shop1.counter,shop2:SHOPS.shop2.counter,shop3:SHOPS.shop3.counter}))};
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)};
+function modal(h,c){const m=document.createElement('div');m.className='cem';m.innerHTML=`<div class="cemb ${c||''}">${h}</div>`;m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()});document.body.appendChild(m);return m}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const a=document.querySelectorAll('.cem');if(a.length){a[a.length-1].remove();e.stopPropagation()}}},true);
+
+/* ---------- PROFESSIONAL BILL COPIES ---------- */
+const sign=(inv,co,eo)=>`<table class="g" style="table-layout:fixed"><tr><td style="width:34%;padding:0"><div style="position:relative;height:74px"><span style="position:absolute;left:6px;top:3px;font-size:10px">${eo?'E&amp;O.E.':''}</span><div style="position:absolute;left:6px;bottom:4px;line-height:1.4;text-align:center"><span style="font-size:10px">Prepared By</span><br><b style="font-size:12px">${pb(inv)}</b></div></div></td><td style="width:32%;padding:0"><div style="position:relative;height:74px"><div style="position:absolute;left:8%;right:8%;bottom:4px;text-align:center;border-top:1px dotted #000;padding-top:2px;font-size:10px">Receiver's Signature</div></div></td><td style="width:34%;padding:0"><div style="position:relative;height:74px"><div style="position:absolute;right:6px;bottom:4px;text-align:right;line-height:1.4"><b style="font-size:13px">For ${co}</b><br><span style="font-size:10px">Authorised Signatory</span></div></div></td></tr></table>`;
+const pb=inv=>esc((inv.preparedBy||'').replace(/^./,c=>c.toUpperCase()));
+const rem=inv=>inv.remarks?`<div class="rmk"><b>Remarks :</b> ${esc(inv.remarks)}</div>`:'';
+const rows=(inv,min,fn)=>{let o=inv.items.map(fn).join('');for(let i=inv.items.length;i<min;i++)o+=fn(null,i);return o};
+function bill(inv,a5){
+ const d=dmy(inv.date),w=numToWords(inv.grand),g=inv.customerGstin,t=f2(inv.taxable);
+ if(inv.shopId==='shop1')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><span class="bx">TAX INVOICE</span></td><td style="width:34%"></td></tr></table>
+<div class="ttl red">CITY ELECTRICALS</div><div class="c" style="font-size:12px;margin-bottom:6px">1/655, Chithambalam Pirivu,<br>Palladam - 641 664. Tirupur District</div>
+<table class="g"><tr><td style="width:50%">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b></td><td>Transport Mode :</td></tr><tr><td>Invoice Date : <b>${d}</b></td><td>Vehicle Number :</td></tr><tr><td>State : TAMILNADU &nbsp; &nbsp; Code : 33</td><td>Place of Supply :</td></tr>
+<tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="height:78px;vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name :<br>Address :<br>GSTIN / UIN :<br>State : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Code :</td></tr></table>
+<div class="itw"><table class="g it"><tr class="hd"><td style="width:6%">S.No.</td><td>PRODUCT DESCRIPTION</td><td style="width:11%">HSN / ACS</td><td style="width:12%">QTY.</td><td style="width:12%">RATE</td><td style="width:15%">AMOUNT</td></tr>
+${rows(inv,13,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
+${rem(inv)}<table class="g"><tr><td rowspan="4" style="width:56%;vertical-align:top;line-height:1.6">Rupees : <b>${w}</b><br><br><b>Bank Details :</b><br>Ac Name : CITY ELECTRICALS<br>Bank &amp; Branch : BANK OF BARODA, PALLADAM.<br>A/c No. : 49140200000190<br>IFSC Code : BARB0PALLAD</td><td><b>Total Amount Before Tax</b></td><td class="r">${t}</td></tr>
+<tr><td><b>Add : CGST 9 %</b></td><td class="r">${f2(inv.cgst)}</td></tr><tr><td><b>Add : SGST 9 %</b></td><td class="r">${f2(inv.sgst)}</td></tr><tr><td><b>Grand Total</b></td><td class="r"><b style="font-size:14px">${f2(inv.grand)}</b></td></tr>
+</table>${sign(inv,'<span class="red">CITY ELECTRICALS</span>',1)}</div>`;
+ if(inv.shopId==='shop2')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">TAX INVOICE</b></td><td style="width:34%"></td></tr></table>
+<table class="nobd"><tr><td class="c"><span style="display:inline-block;vertical-align:middle"><svg viewBox="0 0 200 64" width="190"><path d="M8 4h34v10H18v6h24v26H8V36h24v-6H8z" fill="#2b2a9a"/><text x="52" y="46" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#2b2a9a" font-style="italic">SAMUDRA</text></svg></span><span style="display:inline-block;vertical-align:middle;margin-left:30px"><svg viewBox="0 0 100 70" width="100"><circle cx="50" cy="30" r="26" fill="none" stroke="#2b2a9a" stroke-width="3" stroke-dasharray="5 3"/><text x="50" y="42" text-anchor="middle" font-family="Arial Black" font-size="34" fill="#2b2a9a">2</text><text x="50" y="58" text-anchor="middle" font-family="Arial" font-weight="900" font-size="9" fill="#2b2a9a">YEARS</text><text x="50" y="68" text-anchor="middle" font-family="Arial" font-weight="900" font-size="10" fill="#2b2a9a">WARRANTY</text></svg></span></td></tr></table>
+<div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">CITY ELECTRICALS</div><div style="font-weight:bold;padding-bottom:4px">99A, Chettipalayam Road, Palladam, Tirupur, Tamil Nadu - 641 664.</div></div>
+<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : ____________________ &nbsp; State Code : 33<br>GSTIN : <b>${esc(g)}</b></td><td style="line-height:2;vertical-align:top">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
+<div class="itw"><table class="g it"><tr class="bh"><td style="width:6%">S.No.</td><td>Description of Goods</td><td style="width:10%">HSN Code</td><td style="width:7%">Tax</td><td style="width:11%">Qty</td><td style="width:12%">Rate</td><td style="width:14%">Amount Rs.</td></tr>
+${rows(inv,8,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">18%</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
+<table class="g c"><tr class="bh"><td rowspan="2">Rate</td><td rowspan="2">Taxable Value</td><td colspan="2">CGST</td><td colspan="2">SGST</td><td>TOTAL</td></tr><tr class="bh"><td>Tax</td><td>Tax Value</td><td>Tax</td><td>Tax Value</td><td>Tax Value</td></tr>
+${[[12,6],[18,9],[28,14]].map(([a,b])=>a==18?`<tr><td>18%</td><td>${t}</td><td>9%</td><td>${f2(inv.cgst)}</td><td>9%</td><td>${f2(inv.sgst)}</td><td>${f2(inv.cgst+inv.sgst)}</td></tr>`:`<tr><td>${a}%</td><td></td><td>${b}%</td><td></td><td>${b}%</td><td></td><td></td></tr>`).join('')}
+<tr><td colspan="6" class="r"><b>GRAND TOTAL</b></td><td><b style="font-size:14px">${f2(inv.grand)}</b></td></tr></table>
+${rem(inv)}<table class="g"><tr><td style="width:62%;line-height:1.6;vertical-align:top">Rupees in words : <b>${w}</b><br><br><b>Terms &amp; Conditions :</b><br>Goods once sold will not be taken back.<br>Interest @24% will be charged payments made including 60 days<br>Subject to Palladam Jurisdictions.</td></tr></table>${sign(inv,'CITY ELECTRICALS')}</div>`;
+ return `<div class="nb bt${a5?' a5c':''}"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>Contact : 98424 21958, 85240 85015</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">CASH MEMO / BILL</b></td><td style="width:34%"></td></tr></table>
+<div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">BALU TECH</div><div style="font-weight:bold;padding-bottom:4px">1/655, Chithambalam Pirivu, Palladam - 641 664. Tirupur District</div></div>
+<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : ____________________</td><td style="line-height:2;vertical-align:top">Bill No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
+<div class="itw"><table class="g it"><tr class="bh"><td style="width:7%">S.No.</td><td>Description of Goods</td><td style="width:14%">Qty</td><td style="width:15%">Rate</td><td style="width:17%">Amount Rs.</td></tr>${rows(inv,a5?7:10,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.total)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>')}</table></div>
+${rem(inv)}<table class="g"><tr><td style="width:62%;vertical-align:top;line-height:1.6">Rupees in words : <b>${w}</b></td><td class="r"><b style="font-size:14px">TOTAL : ₹ ${f2(inv.grand)}</b></td></tr><tr><td colspan="2" style="line-height:1.6;vertical-align:top"><b>Terms &amp; Conditions :</b><br>Goods once sold cannot be returned.</td></tr></table>${sign(inv,'BALU TECH')}</div>`;
+}
+const setPage=c=>{let t=document.getElementById('pgSz');if(!t){t=document.createElement('style');t.id='pgSz';document.head.appendChild(t)}t.textContent=c};
+window.addEventListener('afterprint',()=>setPage('@page{size:A4 portrait;margin:8mm 10mm}'));
+const printHTML=(h,inv)=>{
+ let cls='a4-page-frame active-layout'+(h.includes('class="itw"')?' fit':''),html=h,pg='@page{size:A4 portrait;margin:8mm 10mm}';
+ if(inv&&inv.shopId==='shop3'&&inv.items){ /* Balu Tech: A5 if it fits, else A4 */
+  const a=bill(inv,true),pr=document.createElement('div');
+  pr.className='a4-page-frame a5';pr.style.cssText='position:absolute;left:-9999px;top:0;visibility:hidden';pr.innerHTML=a;document.body.appendChild(pr);
+  const hgt=pr.firstElementChild.offsetHeight;pr.remove();
+  if(hgt<=700){html=a;cls='a4-page-frame active-layout a5 fit';pg='@page{size:A5 portrait;margin:6mm}'}
+ }
+ setPage(pg);
+ $('printableInvoiceWrapper').innerHTML='<div class="'+cls+'">'+html+'</div>';window.print()};
+const view=inv=>{const m=modal(`<div class="vbar"><button data-a="p">🖨 Print</button><button data-a="x">✕ Close (Esc)</button></div><div class="paper">${bill(inv)}</div>`,'full');m.onclick=e=>{const a=e.target.dataset.a;if(a==='p')printHTML(bill(inv),inv);if(a==='x')m.remove()}};
+
+/* ---------- SAVE -> EDIT / VIEW / PRINT ---------- */
+let reuse=false;
+function editInv(inv){
+ if(!inv.items){alert('This old bill has no item details, so it cannot be edited.');return}
+ if(inv.shopId!==activeShop.id){alert('Open that branch to edit this bill.');return}
+ inv.items.forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});
+ savedInvoices.splice(savedInvoices.indexOf(inv),1);persist();
+ currentBillItems=inv.items.map(i=>({...i}));
+ $('billCustName').value=inv.customerName;$('billCustAddress').value=inv.customerAddress;$('billCustGstin').value=inv.customerGstin==='-'?'':inv.customerGstin;$('billDate').value=inv.date;$('billRemarks').value=inv.remarks||'';
+ renderBillItemsTable();calculateTotals();$('billInvNumber').value=inv.invoiceNo;reuse=true;window.__editPB=inv.preparedBy;
+ document.querySelectorAll('.cem').forEach(m=>m.remove());switchTab('billing');renderStockTable();renderSalesReports();refreshDash();
+}
+window.editInvoiceObj=editInv;
+function done(inv){const m=modal(`<div class="dt">✔ Invoice ${esc(inv.invoiceNo)} generated</div><p>Total ₹${f2(inv.grand)} &nbsp;|&nbsp; ${esc(inv.customerName)}</p><div class="db"><button data-a="e">✏ Edit</button><button data-a="v">👁 View Bill</button><button data-a="p">🖨 Print</button></div><div class="dh">Esc = close</div>`);
+ m.onclick=e=>{const a=e.target.dataset.a;if(a==='e')editInv(inv);if(a==='v')view(inv);if(a==='p')printHTML(bill(inv),inv)};m.querySelector('button[data-a=v]').focus()}
+window.executeSaveAndPrint=function(){
+ if(!currentBillItems.length){alert('Please add at least one item before printing!');return}
+ const g=$('billCustGstin').value.trim().toUpperCase();
+ if(g&&!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){alert('Customer GSTIN format is invalid. Example: 33AWFPR5243D1ZD');return}
+ const no=$('billInvNumber').value.trim();if(!no){alert('Invoice number is required');return}
+ if(!reuse&&savedInvoices.some(i=>i.shopId===activeShop.id&&i.invoiceNo===no)&&!confirm(`Invoice "${no}" already exists. Continue?`))return;
+ const T=id=>parseFloat($(id).textContent)||0;
+ const inv={shopId:activeShop.id,invoiceNo:no,date:$('billDate').value,customerName:$('billCustName').value.trim()||'Cash Customer',customerAddress:$('billCustAddress').value.trim()||'Palladam',customerGstin:g||'-',taxable:T('totTaxableTxt'),cgst:T('totCgstTxt'),sgst:T('totSgstTxt'),grand:T('totGrandTxt'),preparedBy:(reuse&&window.__editPB)||(()=>{try{return JSON.parse(localStorage.getItem('ce_sess')||'null').u}catch(e){return''}})(),remarks:$('billRemarks').value.trim().slice(0,160),items:JSON.parse(JSON.stringify(currentBillItems))};
+ savedInvoices.unshift(inv);inv.items.forEach(i=>{const p=inventory.find(x=>x.id===i.id);i.wip=!(p&&p.inward>0);if(p&&!i.wip)p.outward+=i.qty});
+ if(!reuse)activeShop.counter++;reuse=false;window.__editPB=null;persist();
+ currentBillItems=[];['billCustName','billCustAddress','billCustGstin','billRemarks'].forEach(k=>$(k).value='');
+ renderBillItemsTable();calculateTotals();refreshInvoiceNumber();renderStockTable();renderSalesReports();refreshDash();done(inv);
+};
+
+/* ---------- AUTOCOMPLETE (customer + item) ---------- */
+const customs=()=>{try{return JSON.parse(localStorage.getItem('ce_custom_items')||'[]')}catch(e){return[]}};
+function ac(inp,src,pick,opt){
+ const EM={billCustName:'No match - new customer will be saved to Master with this bill',mSupName:'No match - new supplier',pS:'No match - new supplier will be added to Master',sS:'No match - new supplier will be added to Master',itemSearch:'No match - will be added to Master as a new item',pI:'No match - new item will be added to Master'};
+ const KN={billCustName:q=>CUST.some(c=>c.name.toLowerCase()===q),mSupName:q=>suppliers.some(c=>c.name.toLowerCase()===q),pS:q=>suppliers.some(c=>c.name.toLowerCase()===q),sS:q=>suppliers.some(c=>c.name.toLowerCase()===q),itemSearch:q=>inventory.some(p=>p.name.toLowerCase()===q),pI:q=>inventory.some(p=>p.name.toLowerCase()===q)};
+ const empty=EM[inp.id]||'',par=inp.parentNode,box=document.createElement('div'),ar=document.createElement('button');
+ box.className='acbox';ar.type='button';ar.className='acarrow';ar.tabIndex=-1;ar.textContent='▼';par.style.position='relative';par.appendChild(box);par.appendChild(ar);inp.style.paddingRight='30px';
+ const place=()=>{ar.style.display=inp.offsetParent?'block':'none';ar.style.top=(inp.offsetTop+(inp.offsetHeight-22)/2)+'px';ar.style.left=(inp.offsetLeft+inp.offsetWidth-27)+'px'};
+ if(window.ResizeObserver)new ResizeObserver(place).observe(inp);
+ let it=[],ix=-1,tm;
+ const draw=()=>{const q=inp.value.trim().toLowerCase();
+  box.innerHTML=it.map((x,i)=>`<div class="aci${i===ix?' on':''}" data-i="${i}">${x.h}</div>`).join('')||(q&&empty&&!(KN[inp.id]&&KN[inp.id](q))?`<div class="acno">${empty}</div>`:'');
+  if(q)box.querySelectorAll('.aci b').forEach(b=>{const t=b.textContent,k=t.toLowerCase().indexOf(q);if(k>=0)b.innerHTML=esc(t.slice(0,k))+'<mark>'+esc(t.slice(k,k+q.length))+'</mark>'+esc(t.slice(k+q.length))});
+  box.style.display=box.innerHTML?'block':'none';const a=box.querySelector('.on');if(a)a.scrollIntoView({block:'nearest'})};
+ const open=all=>{clearTimeout(tm);place();it=src(all?'':inp.value.trim().toLowerCase());if(!all&&inp.value.trim())it=rel(it,inp.value.trim().toLowerCase());ix=it.length?0:-1;draw()};
+ const take=i=>{if(it[i]){pick(it[i]);box.style.display='none'}};
+ inp.addEventListener('input',()=>{if(inp.value.trim())open();else{clearTimeout(tm);box.style.display='none'}});
+ inp.addEventListener('focus',()=>{inp._skip=false});
+ inp.addEventListener('blur',()=>{tm=setTimeout(()=>{box.style.display='none'},150)});
+ inp.addEventListener('keydown',e=>{const k=e.key;if(box.style.display!=='block'){if(k==='ArrowDown'){open(!inp.value.trim());e.preventDefault()}return}
+  if(!it.length){if(k==='Escape')box.style.display='none';return}
+  if(k==='ArrowDown'){ix=(ix+1)%it.length;draw();e.preventDefault()}else if(k==='ArrowUp'){ix=(ix-1+it.length)%it.length;draw();e.preventDefault()}else if(k==='Enter'){e.preventDefault();take(ix)}else if(k==='Escape')box.style.display='none'});
+ box.addEventListener('mousedown',e=>{const d=e.target.closest('.aci');if(d){e.preventDefault();take(+d.dataset.i)}});
+ ar.addEventListener('mousedown',e=>{e.preventDefault();if(box.style.display==='block')box.style.display='none';else{inp.focus();open(true)}})}
+const custs=()=>CUST.map(c=>({customerName:c.name,customerAddress:c.addr,customerGstin:c.gstin||'-'}));
+const fillCust=i=>{$('billCustName').value=i.customerName;$('billCustAddress').value=i.customerAddress||'';$('billCustGstin').value=i.customerGstin==='-'?'':i.customerGstin||''};
+ac($('billCustName'),q=>custs().filter(c=>{const n=c.customerName.toLowerCase();return n.includes(q)&&n!==q}).sort((a,b)=>b.customerName.toLowerCase().startsWith(q)-a.customerName.toLowerCase().startsWith(q)).slice(0,60).map(c=>({c,h:`<b>${esc(c.customerName)}</b> <small>${esc(c.customerAddress||'')} ${c.customerGstin&&c.customerGstin!=='-'?'• '+esc(c.customerGstin):''}</small>`})),x=>{fillCust(x.c);$('itemSearch')._skip=true;$('itemSearch').focus()});
+$('billCustName').addEventListener('change',e=>{const c=custs().find(x=>x.customerName.toLowerCase()===e.target.value.trim().toLowerCase());if(c&&!$('billCustAddress').value)fillCust(c)});
+const sel=$('itemSelect');sel.style.display='none';
+sel.insertAdjacentHTML('beforebegin',`<input id="itemSearch" autocomplete="off" placeholder="Type item name / HSN or choose ▼" class="${sel.className}">`);
+ac($('itemSearch'),q=>inventory.filter(p=>!q||p.name.toLowerCase().includes(q)||String(p.hsn).includes(q)).slice(0,60).map(p=>({p,h:`<b>${esc(p.name)}</b> <small>HSN ${esc(p.hsn)} • ${p.inward>0?'Stock '+(p.inward-p.outward)+' '+esc(p.uom):'No stock (WIP)'} • ₹${p.defaultRate}</small>`})),x=>{if(x.c){sel.value='';$('itemSearch').value=x.c.name;$('itemHsn').value=x.c.hsn==='-'?'':x.c.hsn;$('itemUom').value=x.c.uom;$('itemRate').value=x.c.rate}else{sel.value=x.p.id;onProductSelectChange();$('itemSearch').value=x.p.name}$('itemQty').focus();$('itemQty').select()});
+const _add=window.addItemToCurrentBill;window.addItemToCurrentBill=function(){_add();if(!sel.value){$('itemSearch').value='';$('itemSearch').focus()}};
+
+/* ---------- STOCK: filters, dated inward, item register ---------- */
+const bal=p=>p.inward-p.outward;
+$('stockSearch').placeholder='Filter by item name…';$('stockSearch').insertAdjacentHTML('afterend','<input id="stockHsn" oninput="renderStockTable()" placeholder="Filter by HSN…" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white w-40">');
+window.renderStockTable=function(){
+ const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim(),tb=$('stockTableBody');let val=0;
+ tb.closest('table').tHead.innerHTML='<tr><th class="p-3">Item</th><th class="p-3">HSN</th><th class="p-3">UOM</th><th class="p-3 text-right">Rate</th><th class="p-3 text-center">Inward</th><th class="p-3 text-center">Outward</th><th class="p-3 text-center">Balance</th><th class="p-3 text-center">Actions</th></tr>';
+ tb.innerHTML=inventory.map(p=>{if(!(p.inward>0))return'';val+=Math.max(bal(p),0)*p.defaultRate;if((q&&!p.name.toLowerCase().includes(q))||(h&&!String(p.hsn).includes(h)))return'';const r=bal(p);
+ return `<tr class="hover:bg-slate-800/40"><td class="p-3 font-bold">${esc(p.name)}</td><td class="p-3 font-mono">${esc(p.hsn)}</td><td class="p-3">${esc(p.uom)}</td><td class="p-3 text-right font-mono">₹${p.defaultRate}</td><td class="p-3 text-center text-emerald-400 font-bold">${p.inward}</td><td class="p-3 text-center text-rose-400 font-bold">${p.outward}</td><td class="p-3 text-center font-mono font-bold ${r<=10?'low':''}">${r}</td><td class="p-3 text-center whitespace-nowrap"><button class="ib" title="Stock register" onclick="stkView(${p.id})">👁</button> <button class="ib" title="Edit item" onclick="stkEdit(${p.id})">✏</button> <button class="ib" title="Delete item" onclick="stkDelItem(${p.id})">🗑</button> <button class="px-2 py-1 rounded bg-emerald-600 text-white font-bold text-[11px]" onclick="stkAdd(${p.id})">+ Stock</button></td></tr>`}).join('');
+ $('stockSummary').innerHTML=`Items: <b>${inventory.length}</b> | Stock value: <b>₹${val.toLocaleString('en-IN',{maximumFractionDigits:2})}</b>`};
+window.stkAdd=function(id){const p=inventory.find(x=>x.id===id);const m=modal(`<div class="dt">+ Stock : ${esc(p.name)}</div><label>Date<input type="date" id="sD" value="${today()}"></label><label>Quantity (${esc(p.uom)})<input type="number" id="sQ" min="0" step="any"></label><label>Supplier<input id="sS" autocomplete="off" placeholder="Type first letters…"></label><label>GSTIN<input id="sG" autocomplete="off"></label><label>Address<input id="sA" autocomplete="off"></label><label>Bill No<input id="sR"></label><div class="db"><button id="sOk">Save</button><button onclick="this.closest('.cem').remove()">Cancel</button></div>`);
+ acSup($('sS'),s=>{$('sG').value=s.gstin||'';$('sA').value=s.addr||''});$('sQ').focus();m.querySelector('#sOk').onclick=()=>{const q=parseFloat($('sQ').value);if(!(q>0)){alert('Enter quantity');return}const sn=$('sS').value.trim();upsertSup(sn,$('sG').value,$('sA').value);led.push({id:Date.now(),pid:id,date:$('sD').value||today(),qty:q,ref:(sn+($('sR').value?' / '+$('sR').value:'')).trim()});p.inward+=q;persist();m.remove();renderStockTable();populateDropdown();toast('Stock added');const o=document.querySelector('.cem.reg');if(o){o.remove();stkView(id)}}};
+window.stkEdit=function(id){const p=inventory.find(x=>x.id===id);const n=prompt('Item name',p.name);if(n===null)return;const h=prompt('HSN',p.hsn),u=prompt('UOM',p.uom),r=parseFloat(prompt('Selling rate',p.defaultRate));p.name=n.replace(/[<>]/g,'')||p.name;p.hsn=h||p.hsn;p.uom=(u||p.uom).toUpperCase();if(r>=0)p.defaultRate=r;persist();renderStockTable();populateDropdown();renderMasterTables();toast('Item updated')};
+window.stkView=function(id){const p=inventory.find(x=>x.id===id),L=led.filter(l=>l.pid===id),op=p.inward-L.reduce((a,l)=>a+l.qty,0),ev=[];
+ if(op)ev.push({d:'',t:'Opening stock',i:op,o:0});L.forEach(l=>ev.push({d:l.date,t:'Purchase '+(l.ref||''),i:l.qty,o:0,l:l.id}));
+ savedInvoices.forEach(v=>(v.items||[]).forEach(x=>{if(x.id===id&&!x.wip)ev.push({d:v.date,t:'Sale '+v.invoiceNo+' - '+v.customerName,i:0,o:x.qty})}));
+ ev.sort((a,b)=>a.d.localeCompare(b.d));let b=0;
+ const m=modal(`<div class="vbar"><b>📦 ${esc(p.name)} - Stock Register</b><span><button onclick="stkAdd(${id})">+ Stock</button> <button onclick="this.closest('.cem').remove()">✕ Close</button></span></div><table class="rt"><tr><th>Date</th><th>Details</th><th>In</th><th>Out</th><th>Balance</th><th></th></tr>${ev.map(e=>{b+=e.i-e.o;return `<tr><td>${dmy(e.d)||'-'}</td><td>${esc(e.t)}</td><td>${e.i||''}</td><td>${e.o||''}</td><td><b>${b}</b></td><td>${e.l?`<button class="ib" onclick="stkEnt(${e.l},${id})">✏</button><button class="ib" onclick="stkDel(${e.l},${id})">🗑</button>`:''}</td></tr>`}).join('')||'<tr><td colspan=6>No entries</td></tr>'}</table>`,'reg');
+};
+window.stkEnt=function(lid,id){const l=led.find(x=>x.id===lid),p=inventory.find(x=>x.id===id);const d=prompt('Date (YYYY-MM-DD)',l.date),q=parseFloat(prompt('Quantity',l.qty));if(d&&q>0){p.inward+=q-l.qty;l.qty=q;l.date=d;persist();document.querySelector('.cem.reg').remove();stkView(id);renderStockTable()}};
+window.stkDel=function(lid,id){if(!confirm('Delete this stock entry?'))return;const l=led.find(x=>x.id===lid);inventory.find(x=>x.id===id).inward-=l.qty;led=led.filter(x=>x!==l);persist();document.querySelector('.cem.reg').remove();stkView(id);renderStockTable()};
+
+/* ---------- REPORTS (black & white) ---------- */
+let mode='aud',cur=null;
+$('tabReports').innerHTML=`<div id="repWrap"><div style="font:900 15px sans-serif;margin-bottom:8px">Sales Register &amp; Auditor Export &mdash; <span id="repShopNameBadge"></span></div><div class="rtabs"><button data-m="aud" class="on">📑 Auditor Report (Date / Monthly)</button><button data-m="day">🗒 Daily Sales Details</button></div>
+<div class="rf"><label>From<input type="date" id="rF"></label><label>To<input type="date" id="rT"></label><label>Month<input type="month" id="rM"></label><label>Customer<input id="rC" placeholder="Customer name"></label><label>Item<input id="rI" placeholder="Item name"></label><button id="rClr">Clear</button></div>
+<div class="ra"><button id="rV">👁 View</button><button id="rP">⬇ PDF</button><button id="rX">⬇ Excel</button><span id="rN"></span></div><div class="rbox" id="rOut"></div></div>`;
+function data(){
+ const F=$('rF').value,T=$('rT').value,M=$('rM').value,C=$('rC').value.trim().toLowerCase(),I=$('rI').value.trim().toLowerCase();
+ const L=savedInvoices.filter(v=>v.shopId===activeShop.id&&(!F||v.date>=F)&&(!T||v.date<=T)&&(!M||(v.date||'').startsWith(M))&&(!C||v.customerName.toLowerCase().includes(C))&&(!I||(v.items||[]).some(x=>x.name.toLowerCase().includes(I)))).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+ let head,body=[],foot=null,own=[];const gst=activeShop.isGst;
+ if(mode==='aud'){head=['Date','Invoice No','Customer','GSTIN','Taxable','CGST','SGST','Total'];L.forEach(v=>{body.push([dmy(v.date),v.invoiceNo,v.customerName,v.customerGstin,f2(v.taxable),f2(v.cgst),f2(v.sgst),f2(v.grand)]);own.push(v)});
+  const S=k=>f2(L.reduce((a,v)=>a+(+v[k]||0),0));foot=['','TOTAL ('+L.length+' bills)','','',S('taxable'),S('cgst'),S('sgst'),S('grand')]}
+ else{head=['Date','Invoice No','Customer','Address','GSTIN','Item','HSN','Qty','UOM','Rate','GST %','Total'];let tot=0;
+  L.forEach(v=>{const its=(v.items||[]).filter(x=>!I||x.name.toLowerCase().includes(I));if(!its.length)its.push(null);its.forEach((x,k)=>{if(x)tot+=x.total;else tot+=v.grand;body.push([dmy(v.date),v.invoiceNo,v.customerName,v.customerAddress,v.customerGstin,x?x.name:'(items not recorded)',x?x.hsn:'',x?x.qty:'',x?x.uom:'',x?f2(x.rate):'',gst?'18%':'-',f2(x?x.total:v.grand)]);own.push(k?null:v)})});
+  foot=['','TOTAL','','','','','','','','','',f2(tot)]}
+ return{head,body,foot,own,L}}
+function tbl(d,edit){return `<table class="rt"><tr>${d.head.map(h=>`<th>${h}</th>`).join('')}${edit?'<th>Actions</th>':''}</tr>${d.body.map((r,i)=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?`<td style="white-space:nowrap">${d.own[i]?`<button class="ib" data-e="${i}" title="Edit bill">✏</button> <button class="ib" data-d="${i}" title="Delete bill">🗑</button> <button class="ib" data-p="${i}" title="Print bill">🖨</button>`:''}</td>`:''}</tr>`).join('')||`<tr><td colspan="${d.head.length}">No records</td></tr>`}${d.foot?`<tr class="ft">${d.foot.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?'<td></td>':''}</tr>`:''}</table>`}
+window.renderSalesReports=function(){cur=data();$('rOut').innerHTML=tbl(cur,true);$('rN').textContent=cur.L.length+' bills'};
+$('tabReports').addEventListener('input',renderSalesReports);
+$('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.m){mode=b.dataset.m;document.querySelectorAll('.rtabs button').forEach(x=>x.classList.toggle('on',x===b));renderSalesReports()}
+ else if(b.dataset.e!==undefined)editInv(cur.own[+b.dataset.e]);
+ else if(b.dataset.d!==undefined){const v=cur.own[+b.dataset.d];if(!confirm(`Delete invoice ${v.invoiceNo}? Stock will be restored.`))return;(v.items||[]).forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});savedInvoices.splice(savedInvoices.indexOf(v),1);persist();renderSalesReports();renderStockTable();refreshDash();toast('Invoice deleted')}
+ else if(b.dataset.p!==undefined){const v=cur.own[+b.dataset.p];if(v.items)printHTML(bill(v),v);else alert('This old bill has no item details, so a copy cannot be printed.')}
+ else if(b.id==='rClr'){['rF','rT','rM','rC','rI'].forEach(k=>$(k).value='');renderSalesReports()}
+ else if(b.id==='rV'){const m=modal(`<div class="vbar"><b>${title()}</b><span><button id="vp">🖨 Print / Save PDF</button> <button onclick="this.closest('.cem').remove()">✕ Close (Esc)</button></span></div><div class="paper wide">${tbl(cur,false)}</div>`,'full');m.querySelector('#vp').onclick=()=>printHTML(`<div class="nb"><h3 style="text-align:center">${title()}</h3>${tbl(cur,false)}</div>`)}
+ else if(b.id==='rP')pdf();else if(b.id==='rX')xls()});
+const title=()=>`${activeShop.title||'City Electricals'} - ${mode==='aud'?'Auditor Sales Report':'Daily Sales Details'} ${$('rM').value||(($('rF').value?dmy($('rF').value):'')+' '+($('rT').value?'to '+dmy($('rT').value):''))}`;
+const dl=(blob,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()};
+function xls(){const d=cur,h='<html><meta charset="utf-8"><body><table border="1"><tr>'+d.head.map(x=>`<th>${x}</th>`).join('')+'</tr>'+d.body.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+(d.foot?'<tr>'+d.foot.map(c=>`<td><b>${esc(c)}</b></td>`).join('')+'</tr>':'')+'</table></body></html>';dl(new Blob([h],{type:'application/vnd.ms-excel'}),'Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.xls');toast('Excel downloaded')}
+function pdf(){const J=window.jspdf;if(!J||!J.jsPDF){alert('PDF library not loaded (internet needed). Use View > Print > Save as PDF.');return}const doc=new J.jsPDF({orientation:'landscape'});doc.setFontSize(12);doc.text(title(),14,12);doc.autoTable({head:[cur.head],body:cur.body.concat(cur.foot?[cur.foot]:[]),startY:18,styles:{fontSize:7,textColor:0,lineColor:0,lineWidth:.1},headStyles:{fillColor:[0,0,0],textColor:255}});doc.save('Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.pdf');toast('PDF downloaded')}
+/* v12 */
+window.stkDelItem=function(id){const p=inventory.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete item "${p.name}"?`+(p.outward>0?`\nIt has sales history (${p.outward} sold).`:'')))return;inventory=inventory.filter(x=>x.id!==id);led=led.filter(l=>l.pid!==id);persist();renderStockTable();populateDropdown();renderMasterTables();mrefresh();toast('Item deleted')};
+$('stockHsn').insertAdjacentHTML('afterend','<button id="stkPrint" class="ib" style="padding:7px 12px!important;font-weight:700">🖨 Print Stock Report</button>');
+$('stkPrint').onclick=()=>{const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim();const L=inventory.filter(p=>(!q||p.name.toLowerCase().includes(q))&&(!h||String(p.hsn).includes(h)));
+ printHTML(`<div class="nb"><h3 style="text-align:center;margin:0 0 4px">${esc(activeShop.title)}</h3><div style="text-align:center;margin-bottom:8px"><b>STOCK REPORT</b> &nbsp;|&nbsp; ${dmy(today())}</div><table class="rt"><tr><th>S.No</th><th>Item</th><th>HSN</th><th>UOM</th><th>Rate</th><th>Inward</th><th>Outward</th><th>Balance</th></tr>${L.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.hsn)}</td><td>${esc(p.uom)}</td><td>${f2(p.defaultRate)}</td><td>${p.inward}</td><td>${p.outward}</td><td><b>${p.inward-p.outward}</b></td></tr>`).join('')}</table></div>`)};
+const mt=$('mSupName').closest('.rounded-2xl'),pt=$('mProdName').closest('.rounded-2xl');
+[mt,pt].forEach(c=>{const w=c.querySelector('.overflow-x-auto');if(w)w.style.display='none'});
+const mk=(id,l)=>`<button type="button" class="mArrow" data-k="${id}" data-l="${l}">▼ Show ${l}</button><div id="${id}" class="mrep" style="display:none"></div>`;
+mt.querySelector('button[onclick="saveSupplierMaster()"]').insertAdjacentHTML('afterend',mk('mSupRep','Saved Suppliers'));
+pt.querySelector('button[onclick="saveProductMaster()"]').insertAdjacentHTML('afterend',mk('mProdRep','Saved Products'));
+function mrefresh(){const a=$('mSupRep'),b=$('mProdRep'),ic=(k,i)=>`<button class="ib" data-${k}e="${i}" title="Edit">✏</button> <button class="ib" data-${k}d="${i}" title="Delete">🗑</button>`;
+ if(a.style.display!=='none')a.innerHTML=`<table class="rt"><tr><th>Name</th><th>GSTIN</th><th>Phone</th><th>Email</th><th>Address</th><th>Actions</th></tr>${suppliers.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.gstin||'-')}</td><td>${esc(s.phone||'-')}</td><td>${esc(s.email||'-')}</td><td>${esc(s.addr||'-')}</td><td style="white-space:nowrap">${ic('s',s.id)}</td></tr>`).join('')||'<tr><td colspan="6">No suppliers saved yet</td></tr>'}</table>`;
+ if(b.style.display!=='none')b.innerHTML=`<table class="rt"><tr><th>Name</th><th>HSN</th><th>UOM</th><th>Rate</th><th>Stock</th><th>Actions</th></tr>${inventory.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.hsn)}</td><td>${esc(p.uom)}</td><td>${f2(p.defaultRate)}</td><td>${p.inward-p.outward}</td><td style="white-space:nowrap">${ic('p',p.id)}</td></tr>`).join('')||'<tr><td colspan="6">No products saved yet</td></tr>'}</table>`}
+window.mrefresh=mrefresh;
+$('tabMaster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset,sv=()=>localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));
+ if(D.k){const d=$(D.k),o=d.style.display==='none';d.style.display=o?'block':'none';b.textContent=(o?'▲ Hide ':'▼ Show ')+D.l;mrefresh()}
+ else if(D.se){const s=suppliers.find(x=>x.id==D.se),n=prompt('Supplier name',s.name);if(n===null)return;s.name=n.replace(/[<>]/g,'')||s.name;s.gstin=prompt('GSTIN',s.gstin||'')||'';s.phone=prompt('Phone',s.phone||'')||'';s.email=prompt('Email',s.email||'')||'';s.addr=prompt('Address',s.addr||'')||'';sv();renderMasterTables();mrefresh();toast('Supplier updated')}
+ else if(D.sd){if(!confirm('Delete this supplier?'))return;suppliers=suppliers.filter(x=>x.id!=D.sd);sv();renderMasterTables();mrefresh();toast('Supplier deleted')}
+ else if(D.pe){stkEdit(+D.pe);mrefresh()}
+ else if(D.pd)stkDelItem(+D.pd)});
+['saveSupplierMaster','saveProductMaster'].forEach(n=>{const o=window[n];window[n]=function(){o();mrefresh()}});
+/* v13: manual items */
+$('itemSearch').placeholder='Type item name (or pick from list)';$('itemHsn').placeholder='HSN (optional)';
+$('itemSearch').addEventListener('input',()=>{sel.value=''});
+const prevAdd=window.addItemToCurrentBill;
+window.addItemToCurrentBill=function(){
+ if(parseInt(sel.value)){prevAdd();return}
+ const name=$('itemSearch').value.replace(/[<>]/g,'').trim(),qty=parseFloat($('itemQty').value),rate=parseFloat($('itemRate').value);
+ if(!name||!(qty>0)||isNaN(rate)||rate<0){alert('Enter item name, quantity and rate.');return}
+ const hsn=$('itemHsn').value.trim()||'-',uom=$('itemUom').value||'NOS',taxable=rate*qty,g=activeShop.isGst?taxable*.09:0;
+ let pr=inventory.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!pr){pr={id:Date.now(),name,hsn,uom,defaultRate:rate,inward:0,outward:0};inventory.push(pr);persist();populateDropdown();renderStockTable();renderMasterTables();mrefresh();toast('New product saved to Master')}
+ currentBillItems.push({id:pr.id,name,hsn,uom,qty,rate,taxable,cgst:g,sgst:g,total:taxable+2*g});
+ 
+ renderBillItemsTable();calculateTotals();['itemSearch','itemHsn','itemRate'].forEach(k=>$(k).value='');$('itemQty').value='1';sel.value='';$('itemSearch').focus();
+};
+const _spm=window.saveProductMaster;window.saveProductMaster=function(){if(!$('mProdHsn').value.trim())$('mProdHsn').value='-';_spm()};
+function autoSup(n){if(!n||suppliers.some(s=>s.name.toLowerCase()===n.toLowerCase()))return;suppliers.push({id:Date.now(),name:n,gstin:'',phone:'',email:'',addr:''});localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));renderMasterTables();mrefresh();toast('Supplier saved to Master')}
+function acSup(inp,fill){ac(inp,q=>suppliers.filter(s=>!q||s.name.toLowerCase().includes(q)).sort((a,b)=>(b.name.toLowerCase().startsWith(q)-a.name.toLowerCase().startsWith(q))||a.name.localeCompare(b.name)).slice(0,60).map(s=>({s,h:`<b>${esc(s.name)}</b> <small>${esc(s.gstin||'')} ${esc(s.addr||'')}</small>`})),x=>{inp.value=x.s.name;if(fill)fill(x.s)})}
+acSup($('mSupName'),s=>{$('mSupGst').value=s.gstin||'';$('mSupPhone').value=s.phone||'';$('mSupEmail').value=s.email||'';$('mSupAddr').value=s.addr||''});
+/* v16: customer master, auto-fill, no browser pop-ups */
+const saveCust=()=>localStorage.setItem('ce_customers',JSON.stringify(CUST));
+function upsertCust(n,a,g,manual){n=(n||'').replace(/[<>]/g,'').trim();if(!n||n.toLowerCase()==='cash customer')return false;g=(g&&g!=='-')?g.toUpperCase():'';const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase());if(c){if(a)c.addr=a;if(g)c.gstin=g}else CUST.push({id:Date.now()+Math.random(),name:n,addr:a||'',gstin:g});saveCust();if(manual)toast('Customer saved');return true}
+const _sv=window.executeSaveAndPrint;
+window.executeSaveAndPrint=function(){const n=savedInvoices.length,nm=$('billCustName').value,ad=$('billCustAddress').value.trim(),gs=$('billCustGstin').value.trim();_sv();if(savedInvoices.length>n&&nm.trim()&&!CUST.some(c=>c.name.toLowerCase()===nm.trim().toLowerCase())){upsertCust(nm,ad,gs);mrefresh()}};
+$('billCustName').removeAttribute('list');
+['billCustName','billCustAddress','billCustGstin'].forEach(k=>{const e=$(k);e.setAttribute('autocomplete','nope');e.setAttribute('name','x'+k+Math.random().toString(36).slice(2,6));e.setAttribute('spellcheck','false')});
+document.addEventListener('focusin',e=>{const t=e.target;if(t.tagName==='INPUT'&&!t.getAttribute('autocomplete'))t.setAttribute('autocomplete','off')},true);
+$('billCustName').addEventListener('input',e=>{const c=CUST.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());if(c){if(!$('billCustAddress').value)$('billCustAddress').value=c.addr||'';if(!$('billCustGstin').value)$('billCustGstin').value=c.gstin||''}});
+/* Add New Customer panel removed */
+function custRep(){const d=$('mCuRep');if(!d||d.style.display==='none')return;d.innerHTML=`<table class="rt"><tr><th>Name</th><th>Address</th><th>GSTIN</th><th>Actions</th></tr>${CUST.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.addr||'-')}</td><td>${esc(c.gstin||'-')}</td><td style="white-space:nowrap"><button class="ib" data-ce="${c.id}" title="Edit">✏</button> <button class="ib" data-cd="${c.id}" title="Delete">🗑</button></td></tr>`).join('')||'<tr><td colspan="4">No customers saved yet</td></tr>'}</table>`}
+const _mr0=mrefresh;mrefresh=function(){_mr0();custRep()};window.mrefresh=mrefresh;
+$('tabMaster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset;
+ if(b.id==='mCuSave'){const n=$('mCuName').value.trim();if(!n){alert('Customer name is required');return}const g=$('mCuGst').value.trim().toUpperCase();if(g&&!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){alert('GSTIN format is invalid');return}upsertCust(n,$('mCuAddr').value.trim(),g,true);['mCuName','mCuAddr','mCuGst'].forEach(k=>$(k).value='');mrefresh()}
+ else if(D.ce){const c=CUST.find(x=>x.id==D.ce),n=prompt('Customer name',c.name);if(n===null)return;c.name=n.replace(/[<>]/g,'')||c.name;c.addr=prompt('Address',c.addr||'')||'';c.gstin=(prompt('GSTIN',c.gstin||'')||'').toUpperCase();saveCust();custRep();toast('Customer updated')}
+ else if(D.cd){if(!confirm('Delete this customer?'))return;CUST=CUST.filter(x=>x.id!=D.cd);saveCust();custRep();toast('Customer deleted')}});
+/* v17: remarks row, purchase entry, supplier details auto-store */
+$('billItemsTableBody').closest('.overflow-x-auto').insertAdjacentHTML('afterend','<div class="rmrow"><label for="billRemarks">Remarks</label><input id="billRemarks" maxlength="160" autocomplete="off" placeholder="Remarks"></div>');
+const SG=/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+function upsertSup(n,g,a){n=(n||'').replace(/[<>]/g,'').trim();if(!n)return;g=(g||'').trim().toUpperCase();a=(a||'').trim();const x=suppliers.find(y=>y.name.toLowerCase()===n.toLowerCase());
+ if(x){if(g)x.gstin=g;if(a)x.addr=a}else{suppliers.push({id:Date.now()+Math.random(),name:n,gstin:g,phone:'',email:'',addr:a});toast('Supplier saved to Master')}
+ localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));renderMasterTables();mrefresh()}
+$('stkPrint').insertAdjacentHTML('afterend',' <button id="stkPur" class="ib" style="padding:7px 12px!important;font-weight:700">➕ Purchase Entry</button>');
+$('stkPur').onclick=purchase;
+function purchase(){
+ const m=modal(`<div class="dt">➕ Purchase Entry</div><div class="pg"><label>Date<input type="date" id="pD" value="${today()}"></label><label>Bill No<input id="pB" autocomplete="off"></label></div><label>Supplier / Party *<input id="pS" autocomplete="off" placeholder="Type first letters…"></label><div class="pg"><label>GSTIN<input id="pG" autocomplete="off"></label><label>Address<input id="pA" autocomplete="off"></label></div><label>Item name *<input id="pI" autocomplete="off" placeholder="Type or pick item (new item is added to Master)"></label><div class="pg3"><label>HSN<input id="pH" placeholder="optional" autocomplete="off"></label><label>UOM<input id="pU" value="NOS" autocomplete="off"></label><label>Rate<input id="pR" type="number" min="0" step="any"></label></div><label>Quantity *<input id="pQ" type="number" min="0" step="any"></label><div class="db"><button id="pOk">Save Purchase</button><button onclick="this.closest('.cem').remove()">Cancel</button></div>`,'pur');
+ acSup($('pS'),s=>{$('pG').value=s.gstin||'';$('pA').value=s.addr||'';$('pI').focus()});
+ ac($('pI'),q=>inventory.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>(b.name.toLowerCase().startsWith(q)-a.name.toLowerCase().startsWith(q))||a.name.localeCompare(b.name)).slice(0,60).map(p=>({p,h:`<b>${esc(p.name)}</b> <small>HSN ${esc(p.hsn)} • ₹${p.defaultRate}</small>`})),x=>{$('pI').value=x.p.name;$('pH').value=x.p.hsn==='-'?'':x.p.hsn;$('pU').value=x.p.uom;$('pR').value=x.p.defaultRate;$('pQ').focus()});
+ $('pS').focus();
+ m.querySelector('#pOk').onclick=()=>{
+  const sn=$('pS').value.trim(),it=$('pI').value.replace(/[<>]/g,'').trim(),q=parseFloat($('pQ').value),r=parseFloat($('pR').value),g=$('pG').value.trim().toUpperCase();
+  if(!sn||!it||!(q>0)){alert('Supplier, item name and quantity are required.');return}
+  if(g&&!SG.test(g)){alert('Supplier GSTIN format is invalid.');return}
+  upsertSup(sn,g,$('pA').value);
+  let p=inventory.find(x=>x.name.toLowerCase()===it.toLowerCase());
+  if(!p){p={id:Date.now(),name:it,hsn:$('pH').value.trim()||'-',uom:($('pU').value.trim()||'NOS').toUpperCase(),defaultRate:isNaN(r)?0:r,inward:0,outward:0};inventory.push(p);toast('New product saved to Master')}
+  else if(!isNaN(r)&&r!==p.defaultRate&&confirm(`Update selling rate of "${p.name}" from ₹${p.defaultRate} to ₹${r}?`))p.defaultRate=r;
+  p.inward+=q;const b=$('pB').value.trim();led.push({id:Date.now(),pid:p.id,date:$('pD').value||today(),qty:q,ref:(sn+(b?' / '+b:'')).trim()});
+  persist();m.remove();populateDropdown();renderStockTable();renderMasterTables();mrefresh();toast('Purchase saved')}}
+/* v19: New Stock Ledger + WIP Stock Ledger */
+window.__stkTab='new';
+const SHN={shop1:'City Electricals',shop2:'Samudra',shop3:'Balu Tech'};
+if(!localStorage.getItem('ce_wip_mig')){let ch=0;savedInvoices.forEach(v=>(v.items||[]).forEach(i=>{if(i.wip!==undefined)return;const p=inventory.find(x=>x.id===i.id);if(!p||!(p.inward>0)){i.wip=true;if(p)p.outward=Math.max(0,p.outward-i.qty);ch++}else i.wip=false}));localStorage.setItem('ce_wip_mig','1');if(ch)persist()}
+const sc=$('stockTableBody').closest('.rounded-2xl');
+sc.insertAdjacentHTML('beforebegin','<div class="ltabs"><button data-t="new" class="on">📦 New Stock Ledger</button><button data-t="wip">🛠 WIP Stock Ledger</button><span id="ltHint"></span></div>');
+sc.insertAdjacentHTML('afterend','<div id="wipCard" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto" style="display:none"><table class="w-full text-left text-xs"><thead><tr><th class="p-3">Date</th><th class="p-3">Invoice</th><th class="p-3">Shop</th><th class="p-3">Customer</th><th class="p-3">Item</th><th class="p-3">HSN</th><th class="p-3">Qty</th><th class="p-3">UOM</th><th class="p-3">Rate</th><th class="p-3">Amount</th><th class="p-3">Status</th></tr></thead><tbody id="wipBody"></tbody></table></div>');
+$('ltHint').textContent='Items whose stock was added (Purchase Entry / + Stock).';
+function wipData(){const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim(),o=[];savedInvoices.forEach(v=>(v.items||[]).forEach(i=>{if(!i.wip)return;if((q&&!i.name.toLowerCase().includes(q))||(h&&!String(i.hsn).includes(h)))return;const p=inventory.find(x=>x.id===i.id);o.push({v,i,st:p&&p.inward>0?'Stock added later':'Pending stock'})}));return o.sort((a,b)=>a.v.date<b.v.date?1:a.v.date>b.v.date?-1:0)}
+const wipTot=L=>L.reduce((a,x)=>a+(+x.i.total||0),0);
+function renderWip(){const L=wipData();$('wipBody').innerHTML=L.map(x=>`<tr><td class="p-3">${dmy(x.v.date)}</td><td class="p-3">${esc(x.v.invoiceNo)}</td><td class="p-3">${SHN[x.v.shopId]||''}</td><td class="p-3">${esc(x.v.customerName)}</td><td class="p-3 font-bold">${esc(x.i.name)}</td><td class="p-3">${esc(x.i.hsn)}</td><td class="p-3">${x.i.qty}</td><td class="p-3">${esc(x.i.uom)}</td><td class="p-3">${f2(x.i.rate)}</td><td class="p-3">${f2(x.i.total)}</td><td class="p-3">${x.st}</td></tr>`).join('')||'<tr><td colspan="11" class="p-4">No WIP sales - every billed item has stock added.</td></tr>';
+ if(L.length)$('wipBody').insertAdjacentHTML('beforeend',`<tr style="font-weight:900"><td class="p-3" colspan="9">TOTAL (${L.length} lines)</td><td class="p-3">${f2(wipTot(L))}</td><td></td></tr>`)}
+const _rst=window.renderStockTable;
+window.renderStockTable=function(){_rst();if(!$('stockTableBody').children.length)$('stockTableBody').innerHTML='<tr><td colspan="8" class="p-4">No stock added yet. Use ➕ Purchase Entry or + Stock. Items billed without stock are listed in the WIP Stock Ledger.</td></tr>';renderWip();$('stockSummary').insertAdjacentHTML('beforeend',` | WIP lines: <b>${wipData().length}</b>`)};
+$('tabStock').addEventListener('click',e=>{const b=e.target.closest('.ltabs button');if(!b)return;const w=b.dataset.t==='wip';window.__stkTab=b.dataset.t;document.querySelectorAll('.ltabs button').forEach(x=>x.classList.toggle('on',x===b));sc.style.display=w?'none':'';$('wipCard').style.display=w?'':'none';$('ltHint').textContent=w?'Items billed WITHOUT adding stock (no effect on stock balance).':'Items whose stock was added (Purchase Entry / + Stock).'});
+const hd=t=>`<h3 style="text-align:center;margin:0 0 2px">CITY ELECTRICALS</h3><div style="text-align:center;margin-bottom:8px"><b>${t}</b> &nbsp;|&nbsp; ${dmy(today())}</div>`;
+const newRows=()=>{const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim();return inventory.filter(p=>p.inward>0&&(!q||p.name.toLowerCase().includes(q))&&(!h||String(p.hsn).includes(h)))};
+const newHTML=()=>{const L=newRows();return hd('NEW STOCK LEDGER')+`<table class="rt"><tr><th>S.No</th><th>Item</th><th>HSN</th><th>UOM</th><th>Rate</th><th>Inward</th><th>Outward</th><th>Balance</th><th>Value</th></tr>${L.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.hsn)}</td><td>${esc(p.uom)}</td><td>${f2(p.defaultRate)}</td><td>${p.inward}</td><td>${p.outward}</td><td><b>${p.inward-p.outward}</b></td><td>${f2(Math.max(p.inward-p.outward,0)*p.defaultRate)}</td></tr>`).join('')||'<tr><td colspan="9">No stock added yet</td></tr>'}</table>`};
+const wipHTML=()=>{const L=wipData();return hd('WIP STOCK LEDGER (billed without stock)')+`<table class="rt"><tr><th>S.No</th><th>Date</th><th>Invoice</th><th>Shop</th><th>Customer</th><th>Item</th><th>Qty</th><th>UOM</th><th>Rate</th><th>Amount</th><th>Status</th></tr>${L.map((x,i)=>`<tr><td>${i+1}</td><td>${dmy(x.v.date)}</td><td>${esc(x.v.invoiceNo)}</td><td>${SHN[x.v.shopId]||''}</td><td>${esc(x.v.customerName)}</td><td>${esc(x.i.name)}</td><td>${x.i.qty}</td><td>${esc(x.i.uom)}</td><td>${f2(x.i.rate)}</td><td>${f2(x.i.total)}</td><td>${x.st}</td></tr>`).join('')||'<tr><td colspan="11">No WIP sales</td></tr>'}${L.length?`<tr class="ft"><td colspan="9">TOTAL (${L.length} lines)</td><td>${f2(wipTot(L))}</td><td></td></tr>`:''}</table>`};
+$('stkPrint').textContent='🖨 Print New Stock';$('stkPrint').onclick=()=>printHTML('<div class="nb">'+newHTML()+'</div>');
+$('stkPrint').insertAdjacentHTML('afterend',' <button id="stkPrintW" class="ib" style="padding:7px 12px!important;font-weight:700">🖨 Print WIP</button> <button id="stkPrintA" class="ib" style="padding:7px 12px!important;font-weight:700">🖨 Print Overall</button>');
+$('stkPrintW').onclick=()=>printHTML('<div class="nb">'+wipHTML()+'</div>');
+$('stkPrintA').onclick=()=>printHTML('<div class="nb">'+newHTML()+'<div style="margin-top:22px"></div>'+wipHTML()+'</div>');
+/* v21: dropdown on report filters */
+const cSrc=q=>CUST.filter(c=>!q||c.name.toLowerCase().includes(q)).sort((a,b)=>(b.name.toLowerCase().startsWith(q)-a.name.toLowerCase().startsWith(q))||a.name.localeCompare(b.name)).slice(0,60).map(c=>({c,h:`<b>${esc(c.name)}</b> <small>${esc(c.addr||'')} ${c.gstin?'• '+esc(c.gstin):''}</small>`}));
+ac($('rC'),cSrc,x=>{$('rC').value=x.c.name;$('rC').dispatchEvent(new Event('input',{bubbles:true}))});
+ac($('rI'),q=>inventory.filter(p=>!q||p.name.toLowerCase().includes(q)).slice(0,60).map(p=>({p,h:`<b>${esc(p.name)}</b> <small>HSN ${esc(p.hsn)}</small>`})),x=>{$('rI').value=x.p.name;$('rI').dispatchEvent(new Event('input',{bubbles:true}))});
+/* v21: related-name matching */
+const rk=(q,t)=>{t=String(t||'').toLowerCase();if(t.startsWith(q))return 0;if(t.split(/[\s\-\/(),.]+/).some(w=>w&&w.startsWith(q)))return 1;return t.includes(q)?2:-1};
+const rel=(L,q)=>{const r=L.map(x=>{const m=/<b>(.*?)<\/b>/.exec(x.h||''),n=m?m[1].replace(/&amp;/g,'&'):'';let k=rk(q,n);if(k<0&&/^\d+$/.test(q)&&(x.h||'').includes('HSN '+q))k=1;return[x,k]}).filter(a=>a[1]>=0);const best=r.some(a=>a[1]<2)?r.filter(a=>a[1]<2):r;return best.map((a,i)=>[a,i]).sort((a,b)=>a[0][1]-b[0][1]||a[1]-b[1]).map(a=>a[0][0])};
+if(typeof activeShop!=='undefined'&&activeShop){renderStockTable();renderSalesReports()}
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+document.body.insertAdjacentHTML('afterbegin','<div id="topStrip"><span>V Shadow - City Electricals</span><span><button id="fsBtn" title="Full screen (F11)">⛶</button><button id="aboutBtn" title="About">i</button></span></div>');
+document.body.insertAdjacentHTML('beforeend','<div id="kbBar"></div>');
+const about=()=>{const m=document.createElement('div');m.className='cem';m.innerHTML=`<div class="abt"><a class="abc" onclick="this.closest('.cem').remove()">Close</a>
+<svg class="abs" viewBox="0 0 300 300" preserveAspectRatio="none"><defs><linearGradient id="abg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><path d="M40 300C120 220 160 120 300 40L300 90C200 150 170 230 120 300Z" fill="url(#abg)" opacity=".8"/><path d="M110 300C170 240 220 160 300 110L300 140C240 190 200 250 170 300Z" fill="url(#abg)" opacity=".5"/><path d="M200 300C240 250 270 210 300 190L300 215C275 240 250 270 240 300Z" fill="#ea580c" opacity=".55"/></svg>
+<div class="abh"><svg class="ce-logo-sm" viewBox="0 0 120 120"><use href="#ceLogo"/></svg><span>V Shadow</span></div>
+<div class="abl1"><b>Product Version 23.06 [Build 23.05]</b><br><b>[CITY ELECTRICALS - Version 23.05]</b></div>
+<div class="abl2"><u><b>License Information</b></u><br>Product licensed to : CITY ELECTRICALS<br>Product license No : CE23063<br>[User Edition - Expiry Date : 31/12/2036]</div>
+<div class="abl3"><b>V Shadow Software</b><br>Pesant Nager, Chennai, India<br>Contact : 8754600499</div>
+<div class="abl4">Copyright &copy; 2026. All rights reserved.</div></div>`;m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()});document.body.appendChild(m)};
+$('aboutBtn').onclick=about;
+const fs=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})};
+$('fsBtn').onclick=fs;
+const KB={
+ home:[['Click','Open Branch'],['F11','Full Screen'],['i','About Software']],
+ billing:[['F2','Item Search'],['F3','Customer'],['F4','Remarks'],['Enter','Add Item'],['Ctrl+Enter','Save Bill'],['Alt+2','Master'],['Alt+3','Stock'],['Alt+4','Reports'],['F11','Full Screen'],['Esc','Close']],
+ master:[['F2','New Supplier'],['F3','New Product'],['Alt+1','Billing'],['Alt+3','Stock'],['Alt+4','Reports'],['F11','Full Screen'],['Esc','Close']],
+ stock:[['F2','Filter Item'],['F3','Filter HSN'],['Ctrl+P','Print Stock'],['Alt+1','Billing'],['Alt+2','Master'],['Alt+4','Reports'],['F11','Full Screen'],['Esc','Close']],
+ reports:[['F2','Auditor'],['F3','Daily Details'],['F4','Customer Filter'],['Ctrl+P','View / Print'],['Alt+1','Billing'],['Alt+2','Master'],['Alt+3','Stock'],['F11','Full Screen'],['Esc','Close']]};
+let page='home';
+const draw=()=>{$('kbBar').innerHTML=KB[page].map(k=>`<span><kbd>${k[0]}</kbd>${k[1]}</span>`).join('')};
+const _st=window.switchTab;window.switchTab=function(t){_st(t);page=t;draw()};
+const _ls=window.launchShop;window.launchShop=function(k){_ls(k);page='billing';draw()};
+const _rs=window.returnToShopSelect;window.returnToShopSelect=function(){_rs();page='home';draw()};
+draw();
+window.addEventListener('keydown',e=>{
+ const k=e.key;
+ if(k==='F11'){e.preventDefault();e.stopImmediatePropagation();fs();return}
+ if($('mainWorkspace').style.display!=='flex')return;
+ const mine=['F2','F3','F4'].includes(k)||(e.ctrlKey&&(k==='Enter'||k==='p'||k==='P'))||(e.altKey&&/^[1-4]$/.test(k));
+ if(!mine)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(document.querySelector('.cem'))return;
+ const f=id=>setTimeout(()=>{const el=$(id);if(el){el.focus();if(el.select)el.select()}},0),cl=q=>{const b=document.querySelector(q);if(b)b.click()};
+ if(e.altKey){switchTab(['billing','master','stock','reports'][+k-1]);return}
+ if(e.ctrlKey&&k==='Enter'){if(page==='billing')executeSaveAndPrint();return}
+ if(page==='billing'){if(k==='F2')f('itemSearch');else if(k==='F3')f('billCustName');else if(k==='F4')f('billRemarks')}
+ else if(page==='master'){if(k==='F2')f('mSupName');else if(k==='F3')f('mProdName')}
+ else if(page==='stock'){if(k==='F2')f('stockSearch');else if(k==='F3')f('stockHsn');else if(e.ctrlKey)cl(window.__stkTab==='wip'?'#stkPrintW':'#stkPrint')}
+ else if(page==='reports'){if(k==='F2')cl('.rtabs button[data-m=aud]');else if(k==='F3')cl('.rtabs button[data-m=day]');else if(k==='F4')f('rC');else if(e.ctrlKey)cl('#rV')}
+},true);
+})();
+</script>
+<script>
+/* ===== v18: daily login, Logout button, "New User? Setup Admin" popup, optional Firebase Auth ===== */
+(function(){
+const FIREBASE_API_KEY='';   /* when live: paste your Firebase Web API key here -> accounts are created/checked in Firebase Authentication */
+const FB=!!FIREBASE_API_KEY;
+const $=id=>document.getElementById(id),K='ce_users',SK='ce_sess',cl=x=>String(x).replace(/[<>&"']/g,'');
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const U=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}},SV=a=>localStorage.setItem(K,JSON.stringify(a));
+const H=async x=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ce|'+x));return[...new Uint8Array(b)].map(y=>y.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'ce|'+x)h=(h*33^c.charCodeAt(0))>>>0;return'x'+h}};
+const em=u=>u+'@cityelectricals.app';
+async function fb(path,body){let r,j;try{r=await fetch('https://identitytoolkit.googleapis.com/v1/'+path+'?key='+FIREBASE_API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json()}catch(e){throw new Error('NO_INTERNET')}if(!r.ok)throw new Error((j.error&&j.error.message)||'FIREBASE_ERROR');return j}
+const fbMsg=c=>/INVALID_LOGIN|EMAIL_NOT_FOUND|INVALID_PASSWORD/.test(c)?'Wrong username or password':/EMAIL_EXISTS/.test(c)?'Username already exists':/OPERATION_NOT_ALLOWED/.test(c)?'Email/Password sign-in is not enabled in Firebase':/NO_INTERNET/.test(c)?'No internet connection':/WEAK_PASSWORD/.test(c)?'Password is too weak (min 6 characters)':c;
+document.body.insertAdjacentHTML('beforeend',`<div id="loginScreen"><div class="lg" id="lbox"><svg viewBox="0 0 680 470" preserveAspectRatio="none"><defs><linearGradient id="lgO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#f97316"/></linearGradient><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#99f6e4"/><stop offset="1" stop-color="#14b8a6"/></linearGradient><filter id="lgG" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<g fill="none" stroke="#f59e0b" stroke-width="1.6" opacity=".75"><path d="M119 190H84L64 170H20M119 200H70M119 212H44M119 224H70L52 242H18M119 236H96L80 254H40M150 150V112L138 100V60M165 147V84M181 147V96L192 85V44M150 270V318L138 330V372M170 273V348M192 270V324L210 342V396M111 192h8M111 204h8M111 216h8M111 228h8"/></g>
+<g fill="none" stroke="#2dd4bf" stroke-width="1.6" opacity=".8"><path d="M231 192H296L322 166H420L448 138H640M231 202H306L332 176H430L458 148H660M231 214H316L342 188H450L478 160H610M231 226H286L304 244H350M231 238H270L290 258H330M205 147V100L222 83H300M240 160L262 140H340L360 120H520"/></g>
+<g fill="#f59e0b"><circle cx="20" cy="170" r="3"/><circle cx="70" cy="200" r="3"/><circle cx="44" cy="212" r="3"/><circle cx="18" cy="242" r="3"/><circle cx="40" cy="254" r="3"/><circle cx="138" cy="60" r="3"/><circle cx="165" cy="84" r="3"/><circle cx="192" cy="44" r="3"/><circle cx="138" cy="372" r="3"/><circle cx="170" cy="348" r="3"/><circle cx="210" cy="396" r="3"/></g>
+<g fill="#2dd4bf"><circle cx="640" cy="138" r="3"/><circle cx="660" cy="148" r="3"/><circle cx="610" cy="160" r="3"/><circle cx="350" cy="244" r="3"/><circle cx="330" cy="258" r="3"/><circle cx="300" cy="83" r="3"/><circle cx="520" cy="120" r="3"/></g>
+<polygon points="175,146 231,178 231,242 175,274 119,242 119,178" fill="#05141b" stroke="url(#lgT)" stroke-width="4" filter="url(#lgG)"/><polygon points="175,158 221,184 221,236 175,262 129,236 129,184" fill="none" stroke="#2dd4bf" stroke-width="1" opacity=".45"/>
+<path d="M205 188H172Q148 188 148 210Q148 232 172 232H205" fill="none" stroke="url(#lgO)" stroke-width="9" stroke-linecap="round" filter="url(#lgG)"/><path d="M196 202H174Q165 202 165 210Q165 218 174 218H196" fill="none" stroke="url(#lgT)" stroke-width="5" stroke-linecap="round"/><path d="M186 210H196L202 196L210 224L216 210H224" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#lgG)"/></svg>
+<div class="ver">Version 23.06</div><div class="ttl">CITY ELECTRICALS</div><div class="sub">Billing &amp; Stock Software</div><div class="pnl"></div>
+<div id="lMsg"></div><input id="lUser" placeholder="Username" autocomplete="off"><input id="lPass" type="password" placeholder="Password">
+<a id="lForgot">Forgot Password?</a><button id="lBtn">Log In</button><a id="lNew">New User? Setup Admin</a><div class="lic">This product is licensed to : CITY ELECTRICALS</div></div></div>`);
+const sess=()=>{try{const x=JSON.parse(localStorage.getItem(SK)||'null');return x&&x.day===today()?x:null}catch(e){return null}};
+const msg=(t,bad)=>{$('lMsg').textContent=t;$('lMsg').style.color=bad?'#fda4af':'#cbd5e1'};
+function who(){const u=sess();$('topStrip').firstElementChild.textContent='V Shadow - City Electricals'+(u?'   |   👤 '+u.u:'');const r=$('topStrip').lastElementChild;
+ if(u&&!$('outBtn')){r.insertAdjacentHTML('afterbegin',(u.role==='admin'&&!FB?'<button id="usrBtn" title="Users (max 5)">👥</button>':'')+'<button id="outBtn" class="lo" title="Logout">⏻ Logout</button>');if($('usrBtn'))$('usrBtn').onclick=users;$('outBtn').onclick=logout}}
+function logout(){if(typeof currentBillItems!=='undefined'&&currentBillItems.length&&!confirm('The current bill has unsaved items. Logout anyway?'))return;localStorage.removeItem(SK);sessionStorage.setItem('ce_skip','1');window.__noUnload=1;location.reload()}
+addEventListener('beforeunload',e=>{if(!window.__noUnload&&sess()&&typeof currentBillItems!=='undefined'&&currentBillItems.length){e.preventDefault();e.returnValue=''}});
+function showLogin(){$('shopSelectScreen').style.display='none';$('loginScreen').style.display='flex';$('kbBar').style.display='none';msg('');setTimeout(()=>$('lUser').focus(),50)}
+function ok(m){localStorage.setItem(SK,JSON.stringify({u:m.u,role:m.role,day:today()}));document.querySelectorAll('.cem').forEach(x=>x.remove());$('loginScreen').style.display='none';$('shopSelectScreen').style.display='flex';$('kbBar').style.display='flex';$('lPass').value='';who()}
+async function go(){const u=cl($('lUser').value.trim().toLowerCase()),p=$('lPass').value;if(!u||!p){msg('Enter username and password',1);return}
+ $('lBtn').disabled=true;
+ try{if(FB){await fb('accounts:signInWithPassword',{email:em(u),password:p,returnSecureToken:true});ok({u,role:'admin'})}
+  else{const a=U();if(!a.length){msg('No login created yet. Click "New User? Setup Admin" below.',1);return}const x=a.find(y=>y.u===u);if(!x||x.h!==await H(p)){msg('Wrong username or password',1);$('lPass').select();return}ok(x)}}
+ catch(e){msg(fbMsg(e.message),1)}finally{$('lBtn').disabled=false}}
+$('lBtn').onclick=go;['lUser','lPass'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+$('lForgot').onclick=()=>alert(FB?'Forgot password?\n\nReset it in Firebase console > Authentication > Users, or contact V Shadow support - 8754600499.':'Forgot password?\n\nMember: ask the Admin to delete and re-add your login (top bar 👥 Users).\nAdmin: contact V Shadow support - 8754600499.');
+function setup(){const a=U(),need=false,m=document.createElement('div');m.className='cem';
+ m.innerHTML=`<div class="cemb" style="text-align:left"><div class="dt" style="text-align:center">${a.length&&!FB?'New User Setup':'Setup Admin'}</div><label>Create Username<input id="suU" autocomplete="off"></label><label>Create Password<input id="suP" type="password" autocomplete="new-password"></label><label>Confirm Password<input id="suC" type="password" autocomplete="new-password"></label>${need?'<label>Admin Password (approval)<input id="suA" type="password" autocomplete="new-password"></label>':''}<div id="suM" style="color:#c00;font-size:12px;min-height:16px"></div><div class="db"><button id="suOk">Create</button><button onclick="this.closest(\'.cem\').remove()">Cancel</button></div></div>`;
+ document.body.appendChild(m);const E=t=>{$('suM').textContent=t};$('suU').focus();
+ const mk=async()=>{const u=cl($('suU').value.trim().toLowerCase()),p=$('suP').value;
+  if(!/^[a-z0-9._-]{3,20}$/.test(u)){E('Username: 3-20 letters/numbers (a-z 0-9 . _ -)');return}
+  if(p.length<(FB?6:4)){E('Password: minimum '+(FB?6:4)+' characters');return}
+  if(p!==$('suC').value){E('Passwords do not match');return}
+  $('suOk').disabled=true;
+  try{if(FB){await fb('accounts:signUp',{email:em(u),password:p,returnSecureToken:true});ok({u,role:'admin'})}
+   else{const x=U();if(x.length>=5){E('Maximum 5 users allowed. No more users can be created.');return}if(x.some(y=>y.u===u)){E('Username already exists');return}
+    
+    const n={u,h:await H(p),role:x.length?'member':'admin'};x.push(n);SV(x);ok(n)}}
+  catch(e){E(fbMsg(e.message))}finally{if($('suOk'))$('suOk').disabled=false}};
+ $('suOk').onclick=mk;m.addEventListener('keydown',e=>{if(e.key==='Enter')mk()});m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()})}
+$('lNew').onclick=setup;
+function users(){const a=U(),m=document.createElement('div');m.className='cem';
+ m.innerHTML=`<div class="cemb"><div class="dt">👥 Users (${a.length}/5)</div><table class="rt">${a.map((x,i)=>`<tr><td>${cl(x.u)}</td><td>${x.role}</td><td>${x.role==='admin'?'':`<button class="ib" data-d="${i}">🗑</button>`}</td></tr>`).join('')}</table><p style="font-size:12px;color:#555">To add a member: log out and use "New User? Setup Admin" on the login page (maximum 5 users).</p></div>`;
+ m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()});
+ m.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.d!==undefined&&confirm('Delete this member?')){const x=U();x.splice(+b.dataset.d,1);SV(x);m.remove();users()}});
+ document.body.appendChild(m)}
+let done=false;const _sk=window.skipSplash;
+window.skipSplash=function(){if(done)return;done=true;_sk();if(sess()){who();return}showLogin()};
+if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTimeout(()=>window.skipSplash(),30)}
+})();
+</script>
+</body>
+</html>
