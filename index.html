@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+ <!-- PWA Manifest Link -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Mobile App Features -->
+<meta name="theme-color" content="#070a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="City Electricals">
+
+<!-- Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker Registered!'))
+        .catch(err => console.log('Service Worker Error: ', err));
+    });
+  }
+</script>
 <script>(function(){try{if(!localStorage.getItem('ce_fresh_v12')){var k=['ce_all_bills','ce_inventory_v4','ce_suppliers','ce_counters','ce_stock_ledger','ce_customers'];var has=k.some(function(x){return localStorage.getItem(x)});
 if(has&&!confirm('FRESH START\n\nDelete ALL old bills, stock and suppliers saved in this browser and start new?\n\nOK = delete old data\nCancel = keep old data (this question comes again next time)\n\nTip: press Cancel, use the Backup button, then reopen.'))return;
 k.forEach(function(x){localStorage.removeItem(x)});localStorage.setItem('ce_fresh_v12','done')}}catch(e){}})();</script>
