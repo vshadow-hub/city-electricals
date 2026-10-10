@@ -3,7 +3,10 @@
 <head>
  <!-- PWA Manifest Link -->
 <link rel="manifest" href="manifest.json">
-
+<!-- === PASTE FIREBASE SDK SCRIPTS HERE === -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <!-- Mobile App Features -->
 <meta name="theme-color" content="#070a12">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2172,6 +2175,22 @@ window.addEventListener('keydown',e=>{
 <script>
 /* ===== v18: daily login, Logout button, "New User? Setup Admin" popup, optional Firebase Auth ===== */
 (function(){
+ /* === PASTE YOUR FIREBASE CONFIG HERE === */
+const firebaseConfig = {
+  apiKey: "AIzaSyDqL07IWOlQu3S7LKbiosT5ulCHKf1iUnI",
+  authDomain: "city-electricals.firebaseapp.com",
+  projectId: "city-electricals",
+  storageBucket: "city-electricals.firebasestorage.app",
+  messagingSenderId: "179110824468",
+  appId: "1:179110824468:web:8e9534a40de846b1403501"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+const auth = firebase.auth();
+/* ======================================= */
 const FIREBASE_API_KEY='';   /* when live: paste your Firebase Web API key here -> accounts are created/checked in Firebase Authentication */
 const FB=!!FIREBASE_API_KEY;
 const $=id=>document.getElementById(id),K='ce_users',SK='ce_sess',cl=x=>String(x).replace(/[<>&"']/g,'');
