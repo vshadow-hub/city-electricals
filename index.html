@@ -2191,7 +2191,7 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 const auth = firebase.auth();
 /* ======================================= */
-const FIREBASE_API_KEY='';   /* when live: paste your Firebase Web API key here -> accounts are created/checked in Firebase Authentication */
+const FIREBASE_API_KEY='AIzaSyDqL07IWOlQu3S7LKbiosT5ulCHKf1iUnI';   /* when live: paste your Firebase Web API key here -> accounts are created/checked in Firebase Authentication */
 const FB=!!FIREBASE_API_KEY;
 const $=id=>document.getElementById(id),K='ce_users',SK='ce_sess',cl=x=>String(x).replace(/[<>&"']/g,'');
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
@@ -2218,26 +2218,76 @@ function logout(){if(typeof currentBillItems!=='undefined'&&currentBillItems.len
 addEventListener('beforeunload',e=>{if(!window.__noUnload&&sess()&&typeof currentBillItems!=='undefined'&&currentBillItems.length){e.preventDefault();e.returnValue=''}});
 function showLogin(){$('shopSelectScreen').style.display='none';$('loginScreen').style.display='flex';$('kbBar').style.display='none';msg('');setTimeout(()=>$('lUser').focus(),50)}
 function ok(m){localStorage.setItem(SK,JSON.stringify({u:m.u,role:m.role,day:today()}));document.querySelectorAll('.cem').forEach(x=>x.remove());$('loginScreen').style.display='none';$('shopSelectScreen').style.display='flex';$('kbBar').style.display='flex';$('lPass').value='';who()}
-async function go(){const u=cl($('lUser').value.trim().toLowerCase()),p=$('lPass').value;if(!u||!p){msg('Enter username and password',1);return}
- $('lBtn').disabled=true;
- try{if(FB){await fb('accounts:signInWithPassword',{email:em(u),password:p,returnSecureToken:true});ok({u,role:'admin'})}
-  else{const a=U();if(!a.length){msg('No login created yet. Click "New User? Setup Admin" below.',1);return}const x=a.find(y=>y.u===u);if(!x||x.h!==await H(p)){msg('Wrong username or password',1);$('lPass').select();return}ok(x)}}
- catch(e){msg(fbMsg(e.message),1)}finally{$('lBtn').disabled=false}}
+async function go(){
+  const u = cl($('lUser').value.trim().toLowerCase()), p = $('lPass').value;
+  if (!u || !p) { msg('Enter username and password', 1); return; }
+  
+  $('lBtn').disabled = true;
+  try {
+    if (FB) {
+      // 1. Firebase Auth மூலம் லாகின் செய்வது
+      await fb('accounts:signInWithPassword', { email: em(u), password: p, returnSecureToken: true });
+      
+      // 2. Firestore Database-ல் யூசர் டேட்டா இருக்கிறதா என சரிபார்த்து இல்லையெனில் சேமிப்பது
+      const userDocRef = db.collection("users").doc(u);
+      const docSnap = await userDocRef.get();
+      if (!docSnap.exists) {
+        await userDocRef.set({ username: u, email: em(u), createdAt: new Date() });
+      }
+
+      ok({ u, role: 'admin' });
+    } else {
+      const a = U();
+      if (!a.length) { msg('No login created yet. Click "New User? Setup Admin" below.', 1); return; }
+      const x = a.find(y => y.u === u);
+      if (!x || x.h !== await H(p)) { msg('Wrong username or password', 1); $('lPass').select(); return; }
+      ok(x);
+    }
+  } catch (e) {
+    msg(fbMsg(e.message), 1);
+  } finally {
+    $('lBtn').disabled = false;
+  }
+}
 $('lBtn').onclick=go;['lUser','lPass'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
 $('lForgot').onclick=()=>alert(FB?'Forgot password?\n\nReset it in Firebase console > Authentication > Users, or contact V Shadow support - 8754600499.':'Forgot password?\n\nMember: ask the Admin to delete and re-add your login (top bar 👥 Users).\nAdmin: contact V Shadow support - 8754600499.');
 function setup(){const a=U(),need=false,m=document.createElement('div');m.className='cem';
  m.innerHTML=`<div class="cemb" style="text-align:left"><div class="dt" style="text-align:center">${a.length&&!FB?'New User Setup':'Setup Admin'}</div><label>Create Username<input id="suU" autocomplete="off"></label><label>Create Password<input id="suP" type="password" autocomplete="new-password"></label><label>Confirm Password<input id="suC" type="password" autocomplete="new-password"></label>${need?'<label>Admin Password (approval)<input id="suA" type="password" autocomplete="new-password"></label>':''}<div id="suM" style="color:#c00;font-size:12px;min-height:16px"></div><div class="db"><button id="suOk">Create</button><button onclick="this.closest(\'.cem\').remove()">Cancel</button></div></div>`;
  document.body.appendChild(m);const E=t=>{$('suM').textContent=t};$('suU').focus();
- const mk=async()=>{const u=cl($('suU').value.trim().toLowerCase()),p=$('suP').value;
-  if(!/^[a-z0-9._-]{3,20}$/.test(u)){E('Username: 3-20 letters/numbers (a-z 0-9 . _ -)');return}
-  if(p.length<(FB?6:4)){E('Password: minimum '+(FB?6:4)+' characters');return}
-  if(p!==$('suC').value){E('Passwords do not match');return}
-  $('suOk').disabled=true;
-  try{if(FB){await fb('accounts:signUp',{email:em(u),password:p,returnSecureToken:true});ok({u,role:'admin'})}
-   else{const x=U();if(x.length>=5){E('Maximum 5 users allowed. No more users can be created.');return}if(x.some(y=>y.u===u)){E('Username already exists');return}
-    
-    const n={u,h:await H(p),role:x.length?'member':'admin'};x.push(n);SV(x);ok(n)}}
-  catch(e){E(fbMsg(e.message))}finally{if($('suOk'))$('suOk').disabled=false}};
+ const mk = async () => {
+  const u = cl($('suU').value.trim().toLowerCase()), p = $('suP').value;
+  if (!/^[a-z0-9._-]{3,20}$/.test(u)) { E('Username: 3-20 letters/numbers (a-z 0-9 . _ -)'); return; }
+  if (p.length < (FB ? 6 : 4)) { E('Password: minimum ' + (FB ? 6 : 4) + ' characters'); return; }
+  if (p !== $('suC').value) { E('Passwords do not match'); return; }
+  
+  $('suOk').disabled = true;
+  try {
+    if (FB) {
+      // 1. Firebase Authentication-il account create seivathu
+      await fb('accounts:signUp', { email: em(u), password: p, returnSecureToken: true });
+      
+      // 2. Firestore Database-il username-ai permanent-ah save seivathu (Ella system-um paarkalam)
+      await db.collection("users").doc(u).set({
+        username: u,
+        email: em(u),
+        createdAt: new Date()
+      });
+
+      ok({ u, role: 'admin' });
+    } else {
+      const x = U();
+      if (x.length >= 5) { E('Maximum 5 users allowed. No more users can be created.'); return; }
+      if (x.some(y => y.u === u)) { E('Username already exists'); return; }
+      
+      const n = { u, h: await H(p), role: x.length ? 'member' : 'admin' };
+      x.push(n); SV(x); ok(n);
+    }
+  } catch (e) {
+    E(fbMsg(e.message));
+  } finally {
+    if ($('suOk')) $('suOk'].disabled = false;
+  }
+};
  $('suOk').onclick=mk;m.addEventListener('keydown',e=>{if(e.key==='Enter')mk()});m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()})}
 $('lNew').onclick=setup;
 function users(){const a=U(),m=document.createElement('div');m.className='cem';
