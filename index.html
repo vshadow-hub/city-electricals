@@ -13,19 +13,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="City Electricals">
 
-<!-- Service Worker Registration -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('Service Worker Registered!'))
-        .catch(err => console.log('Service Worker Error: ', err));
-    });
-  }
-</script>
-<script>(function(){try{if(!localStorage.getItem('ce_fresh_v12')){var k=['ce_all_bills','ce_inventory_v4','ce_suppliers','ce_counters','ce_stock_ledger','ce_customers'];var has=k.some(function(x){return localStorage.getItem(x)});
-if(has&&!confirm('FRESH START\n\nDelete ALL old bills, stock and suppliers saved in this browser and start new?\n\nOK = delete old data\nCancel = keep old data (this question comes again next time)\n\nTip: press Cancel, use the Backup button, then reopen.'))return;
-k.forEach(function(x){localStorage.removeItem(x)});localStorage.setItem('ce_fresh_v12','done')}}catch(e){}})();</script>
+<!-- Service worker registration omitted: this single-file deployment does not include sw.js. -->
+<script>/* Preserve existing local data; no automatic destructive reset. */</script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -469,7 +458,7 @@ Enter Password ➔
 <div id="tabBilling" class="space-y-4">
 <!-- Customer & Bill Info -->
 <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
 <div>
 <label class="block text-[11px] font-bold text-slate-400 mb-1">Invoice No. *</label>
 <input type="text" id="billInvNumber" tabindex="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-amber-300 font-mono font-bold focus:border-amber-400 focus:outline-none">
@@ -483,12 +472,16 @@ Enter Password ➔
 <input type="text" id="billCustName" tabindex="3" placeholder="M/s. Jayalakshmi / Cash" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
 </div>
 <div>
+<label class="block text-[11px] font-bold text-slate-400 mb-1">Customer Mobile No.</label>
+<input type="tel" id="billCustPhone" tabindex="4" inputmode="numeric" maxlength="15" placeholder="Mobile number" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+</div>
+<div>
 <label class="block text-[11px] font-bold text-slate-400 mb-1">Address / Town</label>
-<input type="text" id="billCustAddress" tabindex="4" placeholder="Cheran Nagar, Palladam" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+<input type="text" id="billCustAddress" tabindex="5" placeholder="Cheran Nagar, Palladam" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
 </div>
 <div>
 <label class="block text-[11px] font-bold text-slate-400 mb-1">Customer GSTIN (B2B)</label>
-<input type="text" id="billCustGstin" tabindex="5" placeholder="33AWFPR5243D1ZD" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white uppercase focus:outline-none">
+<input type="text" id="billCustGstin" tabindex="6" placeholder="33AWFPR5243D1ZD" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white uppercase focus:outline-none">
 </div>
 </div>
 </div>
@@ -1384,6 +1377,7 @@ invoiceNo: invNo,
 date: dateVal,
 customerName: custName,
 customerAddress: custAddr,
+customerPhone: document.getElementById('billCustPhone')?.value.trim() || '',
 customerGstin: custGstin,
 taxable: taxable,
 cgst: cgst,
@@ -1415,24 +1409,25 @@ renderSalesReports();
 // ================= MASTER DATA METHODS =================
 function saveSupplierMaster() {
 const name = document.getElementById('mSupName').value.trim();
-const gst = document.getElementById('mSupGst').value.trim();
+const gst = document.getElementById('mSupGst').value.trim().toUpperCase();
 const phone = document.getElementById('mSupPhone').value.trim();
 const email = document.getElementById('mSupEmail').value.trim();
 const addr = document.getElementById('mSupAddr').value.trim();
-
-if (!name) { alert("Supplier Name is required!"); return; }
-
-suppliers.push({ id: Date.now(), name, gstin: gst, phone, email, addr });
+if (!name) { alert("Party / Supplier Name is required!"); return; }
+// One shared Party Master: update by name and mirror the party into customer records too.
+let sup = suppliers.find(x => String(x.name||'').trim().toLowerCase() === name.toLowerCase());
+if (!sup) { sup = { id: Date.now()+Math.random(), name, gstin:gst, phone, email, addr }; suppliers.push(sup); }
+else { if(gst)sup.gstin=gst; if(phone)sup.phone=phone; if(email)sup.email=email; if(addr)sup.addr=addr; }
 localStorage.setItem('ce_suppliers', JSON.stringify(suppliers));
+let customers=[]; try{customers=JSON.parse(localStorage.getItem('ce_customers')||'[]')}catch(e){}
+if(!Array.isArray(customers))customers=[];
+let cust=customers.find(x=>String(x.name||'').trim().toLowerCase()===name.toLowerCase());
+if(!cust){customers.push({id:sup.id,name,addr,gstin:gst,phone,email});}
+else {if(addr)cust.addr=addr;if(gst)cust.gstin=gst;if(phone)cust.phone=phone;if(email)cust.email=email;}
+localStorage.setItem('ce_customers',JSON.stringify(customers));
 renderMasterTables();
-
-document.getElementById('mSupName').value = '';
-document.getElementById('mSupGst').value = '';
-document.getElementById('mSupPhone').value = '';
-document.getElementById('mSupEmail').value = '';
-document.getElementById('mSupAddr').value = '';
+['mSupName','mSupGst','mSupPhone','mSupEmail','mSupAddr'].forEach(id=>document.getElementById(id).value='');
 }
-
 function saveProductMaster() {
 const name = document.getElementById('mProdName').value.trim();
 const hsn = document.getElementById('mProdHsn').value.trim();
@@ -1636,7 +1631,7 @@ window.executeSaveAndPrint=function(){
 };
 
 const _sup=saveSupplierMaster,_prod=saveProductMaster;
-window.saveSupplierMaster=function(){['mSupName','mSupAddr'].forEach(i=>$(i).value=$(i).value.replace(/[<>]/g,''));_sup();toast('Supplier saved')};
+window.saveSupplierMaster=function(){['mSupName','mSupAddr'].forEach(i=>$(i).value=$(i).value.replace(/[<>]/g,''));const n=$('mSupName').value.trim(),g=$('mSupGst').value.trim(),ph=$('mSupPhone').value.trim(),a=$('mSupAddr').value.trim();_sup();if(n){upsertCust(n,a,g,false,ph);syncSharedPartyMaster();mrefresh();custRep()}toast('Party saved to shared Master')};
 window.saveProductMaster=function(){$('mProdName').value=$('mProdName').value.replace(/[<>]/g,'');_prod();refreshDash();toast('Product saved')};
 
 /* 5. Stock tab: search, status, add-stock, edit-rate, valuation */
@@ -1867,7 +1862,7 @@ function bill(inv,a5){
  if(inv.shopId==='shop1')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><span class="bx">TAX INVOICE</span></td><td style="width:34%"></td></tr></table>
 <div class="ttl red">CITY ELECTRICALS</div><div class="c" style="font-size:12px;margin-bottom:6px">1/655, Chithambalam Pirivu,<br>Palladam - 641 664. Tirupur District</div>
 <table class="g"><tr><td style="width:50%">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b></td><td>Transport Mode :</td></tr><tr><td>Invoice Date : <b>${d}</b></td><td>Vehicle Number :</td></tr><tr><td>State : TAMILNADU &nbsp; &nbsp; Code : 33</td><td>Place of Supply :</td></tr>
-<tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="height:78px;vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name :<br>Address :<br>GSTIN / UIN :<br>State : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Code :</td></tr></table>
+<tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="height:78px;vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name :<br>Address :<br>GSTIN / UIN :<br>State : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Code :</td></tr></table>
 <div class="itw"><table class="g it"><tr class="hd"><td style="width:6%">S.No.</td><td>PRODUCT DESCRIPTION</td><td style="width:11%">HSN / ACS</td><td style="width:12%">QTY.</td><td style="width:12%">RATE</td><td style="width:15%">AMOUNT</td></tr>
 ${rows(inv,13,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
 ${rem(inv)}<table class="g"><tr><td rowspan="4" style="width:56%;vertical-align:top;line-height:1.6">Rupees : <b>${w}</b><br><br><b>Bank Details :</b><br>Ac Name : CITY ELECTRICALS<br>Bank &amp; Branch : BANK OF BARODA, PALLADAM.<br>A/c No. : 49140200000190<br>IFSC Code : BARB0PALLAD</td><td><b>Total Amount Before Tax</b></td><td class="r">${t}</td></tr>
@@ -1876,7 +1871,7 @@ ${rem(inv)}<table class="g"><tr><td rowspan="4" style="width:56%;vertical-align:
  if(inv.shopId==='shop2')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">TAX INVOICE</b></td><td style="width:34%"></td></tr></table>
 <table class="nobd"><tr><td class="c"><span style="display:inline-block;vertical-align:middle"><svg viewBox="0 0 200 64" width="190"><path d="M8 4h34v10H18v6h24v26H8V36h24v-6H8z" fill="#2b2a9a"/><text x="52" y="46" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#2b2a9a" font-style="italic">SAMUDRA</text></svg></span><span style="display:inline-block;vertical-align:middle;margin-left:30px"><svg viewBox="0 0 100 70" width="100"><circle cx="50" cy="30" r="26" fill="none" stroke="#2b2a9a" stroke-width="3" stroke-dasharray="5 3"/><text x="50" y="42" text-anchor="middle" font-family="Arial Black" font-size="34" fill="#2b2a9a">2</text><text x="50" y="58" text-anchor="middle" font-family="Arial" font-weight="900" font-size="9" fill="#2b2a9a">YEARS</text><text x="50" y="68" text-anchor="middle" font-family="Arial" font-weight="900" font-size="10" fill="#2b2a9a">WARRANTY</text></svg></span></td></tr></table>
 <div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">CITY ELECTRICALS</div><div style="font-weight:bold;padding-bottom:4px">99A, Chettipalayam Road, Palladam, Tirupur, Tamil Nadu - 641 664.</div></div>
-<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : ____________________ &nbsp; State Code : 33<br>GSTIN : <b>${esc(g)}</b></td><td style="line-height:2;vertical-align:top">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
+<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : <b>${esc(inv.customerPhone||'')}</b> &nbsp; State Code : 33<br>GSTIN : <b>${esc(g)}</b></td><td style="line-height:2;vertical-align:top">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
 <div class="itw"><table class="g it"><tr class="bh"><td style="width:6%">S.No.</td><td>Description of Goods</td><td style="width:10%">HSN Code</td><td style="width:7%">Tax</td><td style="width:11%">Qty</td><td style="width:12%">Rate</td><td style="width:14%">Amount Rs.</td></tr>
 ${rows(inv,8,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">18%</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
 <table class="g c"><tr class="bh"><td rowspan="2">Rate</td><td rowspan="2">Taxable Value</td><td colspan="2">CGST</td><td colspan="2">SGST</td><td>TOTAL</td></tr><tr class="bh"><td>Tax</td><td>Tax Value</td><td>Tax</td><td>Tax Value</td><td>Tax Value</td></tr>
@@ -1885,7 +1880,7 @@ ${[[12,6],[18,9],[28,14]].map(([a,b])=>a==18?`<tr><td>18%</td><td>${t}</td><td>9
 ${rem(inv)}<table class="g"><tr><td style="width:62%;line-height:1.6;vertical-align:top">Rupees in words : <b>${w}</b><br><br><b>Terms &amp; Conditions :</b><br>Goods once sold will not be taken back.<br>Interest @24% will be charged payments made including 60 days<br>Subject to Palladam Jurisdictions.</td></tr></table>${sign(inv,'CITY ELECTRICALS')}</div>`;
  return `<div class="nb bt${a5?' a5c':''}"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>Contact : 98424 21958, 85240 85015</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">CASH MEMO / BILL</b></td><td style="width:34%"></td></tr></table>
 <div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">BALU TECH</div><div style="font-weight:bold;padding-bottom:4px">1/655, Chithambalam Pirivu, Palladam - 641 664. Tirupur District</div></div>
-<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : ____________________</td><td style="line-height:2;vertical-align:top">Bill No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
+<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : <b>${esc(inv.customerPhone||'')}</b></td><td style="line-height:2;vertical-align:top">Bill No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
 <div class="itw"><table class="g it"><tr class="bh"><td style="width:7%">S.No.</td><td>Description of Goods</td><td style="width:14%">Qty</td><td style="width:15%">Rate</td><td style="width:17%">Amount Rs.</td></tr>${rows(inv,a5?7:10,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.total)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>')}</table></div>
 ${rem(inv)}<table class="g"><tr><td style="width:62%;vertical-align:top;line-height:1.6">Rupees in words : <b>${w}</b></td><td class="r"><b style="font-size:14px">TOTAL : ₹ ${f2(inv.grand)}</b></td></tr><tr><td colspan="2" style="line-height:1.6;vertical-align:top"><b>Terms &amp; Conditions :</b><br>Goods once sold cannot be returned.</td></tr></table>${sign(inv,'BALU TECH')}</div>`;
 }
@@ -1911,7 +1906,7 @@ function editInv(inv){
  inv.items.forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});
  savedInvoices.splice(savedInvoices.indexOf(inv),1);persist();
  currentBillItems=inv.items.map(i=>({...i}));
- $('billCustName').value=inv.customerName;$('billCustAddress').value=inv.customerAddress;$('billCustGstin').value=inv.customerGstin==='-'?'':inv.customerGstin;$('billDate').value=inv.date;$('billRemarks').value=inv.remarks||'';
+ $('billCustName').value=inv.customerName;$('billCustPhone').value=inv.customerPhone||'';$('billCustAddress').value=inv.customerAddress;$('billCustGstin').value=inv.customerGstin==='-'?'':inv.customerGstin;$('billDate').value=inv.date;$('billRemarks').value=inv.remarks||'';
  renderBillItemsTable();calculateTotals();$('billInvNumber').value=inv.invoiceNo;reuse=true;window.__editPB=inv.preparedBy;
  document.querySelectorAll('.cem').forEach(m=>m.remove());switchTab('billing');renderStockTable();renderSalesReports();refreshDash();
 }
@@ -1925,10 +1920,10 @@ window.executeSaveAndPrint=function(){
  const no=$('billInvNumber').value.trim();if(!no){alert('Invoice number is required');return}
  if(!reuse&&savedInvoices.some(i=>i.shopId===activeShop.id&&i.invoiceNo===no)&&!confirm(`Invoice "${no}" already exists. Continue?`))return;
  const T=id=>parseFloat($(id).textContent)||0;
- const inv={shopId:activeShop.id,invoiceNo:no,date:$('billDate').value,customerName:$('billCustName').value.trim()||'Cash Customer',customerAddress:$('billCustAddress').value.trim()||'Palladam',customerGstin:g||'-',taxable:T('totTaxableTxt'),cgst:T('totCgstTxt'),sgst:T('totSgstTxt'),grand:T('totGrandTxt'),preparedBy:(reuse&&window.__editPB)||(()=>{try{return JSON.parse(localStorage.getItem('ce_sess')||'null').u}catch(e){return''}})(),remarks:$('billRemarks').value.trim().slice(0,160),items:JSON.parse(JSON.stringify(currentBillItems))};
+ const inv={shopId:activeShop.id,invoiceNo:no,date:$('billDate').value,customerName:$('billCustName').value.trim()||'Cash Customer',customerAddress:$('billCustAddress').value.trim()||'Palladam',customerPhone:$('billCustPhone').value.trim(),customerGstin:g||'-',taxable:T('totTaxableTxt'),cgst:T('totCgstTxt'),sgst:T('totSgstTxt'),grand:T('totGrandTxt'),preparedBy:(reuse&&window.__editPB)||(()=>{try{return JSON.parse(localStorage.getItem('ce_sess')||'null').u}catch(e){return''}})(),remarks:$('billRemarks').value.trim().slice(0,160),items:JSON.parse(JSON.stringify(currentBillItems))};
  savedInvoices.unshift(inv);inv.items.forEach(i=>{const p=inventory.find(x=>x.id===i.id);i.wip=!(p&&p.inward>0);if(p&&!i.wip)p.outward+=i.qty});
  if(!reuse)activeShop.counter++;reuse=false;window.__editPB=null;persist();
- currentBillItems=[];['billCustName','billCustAddress','billCustGstin','billRemarks'].forEach(k=>$(k).value='');
+ currentBillItems=[];['billCustName','billCustPhone','billCustAddress','billCustGstin','billRemarks'].forEach(k=>$(k).value='');
  renderBillItemsTable();calculateTotals();refreshInvoiceNumber();renderStockTable();renderSalesReports();refreshDash();done(inv);
 };
 
@@ -1956,9 +1951,9 @@ function ac(inp,src,pick,opt){
   if(k==='ArrowDown'){ix=(ix+1)%it.length;draw();e.preventDefault()}else if(k==='ArrowUp'){ix=(ix-1+it.length)%it.length;draw();e.preventDefault()}else if(k==='Enter'){e.preventDefault();take(ix)}else if(k==='Escape')box.style.display='none'});
  box.addEventListener('mousedown',e=>{const d=e.target.closest('.aci');if(d){e.preventDefault();take(+d.dataset.i)}});
  ar.addEventListener('mousedown',e=>{e.preventDefault();if(box.style.display==='block')box.style.display='none';else{inp.focus();open(true)}})}
-const custs=()=>CUST.map(c=>({customerName:c.name,customerAddress:c.addr,customerGstin:c.gstin||'-'}));
-const fillCust=i=>{$('billCustName').value=i.customerName;$('billCustAddress').value=i.customerAddress||'';$('billCustGstin').value=i.customerGstin==='-'?'':i.customerGstin||''};
-ac($('billCustName'),q=>custs().filter(c=>{const n=c.customerName.toLowerCase();return n.includes(q)&&n!==q}).sort((a,b)=>b.customerName.toLowerCase().startsWith(q)-a.customerName.toLowerCase().startsWith(q)).slice(0,60).map(c=>({c,h:`<b>${esc(c.customerName)}</b> <small>${esc(c.customerAddress||'')} ${c.customerGstin&&c.customerGstin!=='-'?'• '+esc(c.customerGstin):''}</small>`})),x=>{fillCust(x.c);$('itemSearch')._skip=true;$('itemSearch').focus()});
+const custs=()=>CUST.map(c=>({customerName:c.name,customerAddress:c.addr,customerPhone:c.phone||'',customerGstin:c.gstin||'-'}));
+const fillCust=i=>{$('billCustName').value=i.customerName;$('billCustPhone').value=i.customerPhone||'';$('billCustAddress').value=i.customerAddress||'';$('billCustGstin').value=i.customerGstin==='-'?'':i.customerGstin||''};
+ac($('billCustName'),q=>custs().filter(c=>{const n=c.customerName.toLowerCase();return n.includes(q)&&n!==q}).sort((a,b)=>b.customerName.toLowerCase().startsWith(q)-a.customerName.toLowerCase().startsWith(q)).slice(0,60).map(c=>({c,h:`<b>${esc(c.customerName)}</b> <small>${esc(c.customerPhone||'')} ${esc(c.customerAddress||'')} ${c.customerGstin&&c.customerGstin!=='-'?'• '+esc(c.customerGstin):''}</small>`})),x=>{fillCust(x.c);$('itemSearch')._skip=true;$('itemSearch').focus()});
 $('billCustName').addEventListener('change',e=>{const c=custs().find(x=>x.customerName.toLowerCase()===e.target.value.trim().toLowerCase());if(c&&!$('billCustAddress').value)fillCust(c)});
 const sel=$('itemSelect');sel.style.display='none';
 sel.insertAdjacentHTML('beforebegin',`<input id="itemSearch" autocomplete="off" placeholder="Type item name / HSN or choose ▼" class="${sel.className}">`);
@@ -1984,7 +1979,7 @@ window.stkView=function(id){const p=inventory.find(x=>x.id===id),L=led.filter(l=
  const m=modal(`<div class="vbar"><b>📦 ${esc(p.name)} - Stock Register</b><span><button onclick="stkAdd(${id})">+ Stock</button> <button onclick="this.closest('.cem').remove()">✕ Close</button></span></div><table class="rt"><tr><th>Date</th><th>Details</th><th>In</th><th>Out</th><th>Balance</th><th></th></tr>${ev.map(e=>{b+=e.i-e.o;return `<tr><td>${dmy(e.d)||'-'}</td><td>${esc(e.t)}</td><td>${e.i||''}</td><td>${e.o||''}</td><td><b>${b}</b></td><td>${e.l?`<button class="ib" onclick="stkEnt(${e.l},${id})">✏</button><button class="ib" onclick="stkDel(${e.l},${id})">🗑</button>`:''}</td></tr>`}).join('')||'<tr><td colspan=6>No entries</td></tr>'}</table>`,'reg');
 };
 window.stkEnt=function(lid,id){const l=led.find(x=>x.id===lid),p=inventory.find(x=>x.id===id);const d=prompt('Date (YYYY-MM-DD)',l.date),q=parseFloat(prompt('Quantity',l.qty));if(d&&q>0){p.inward+=q-l.qty;l.qty=q;l.date=d;persist();document.querySelector('.cem.reg').remove();stkView(id);renderStockTable()}};
-window.stkDel=function(lid,id){if(!confirm('Delete this stock entry?'))return;const l=led.find(x=>x.id===lid);inventory.find(x=>x.id===id).inward-=l.qty;led=led.filter(x=>x!==l);persist();document.querySelector('.cem.reg').remove();stkView(id);renderStockTable()};
+window.stkDel=function(lid,id){if(!confirm('Delete this stock entry?'))return;const l=led.find(x=>x.id===lid);inventory.find(x=>x.id===id).inward-=l.qty;window.ceDeleteRecord&&window.ceDeleteRecord('ce_stock_ledger',l);led=led.filter(x=>x!==l);persist();document.querySelector('.cem.reg').remove();stkView(id);renderStockTable()};
 
 /* ---------- REPORTS (black & white) ---------- */
 let mode='aud',cur=null;
@@ -2007,7 +2002,7 @@ $('tabReports').addEventListener('input',renderSalesReports);
 $('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  if(b.dataset.m){mode=b.dataset.m;document.querySelectorAll('.rtabs button').forEach(x=>x.classList.toggle('on',x===b));renderSalesReports()}
  else if(b.dataset.e!==undefined)editInv(cur.own[+b.dataset.e]);
- else if(b.dataset.d!==undefined){const v=cur.own[+b.dataset.d];if(!confirm(`Delete invoice ${v.invoiceNo}? Stock will be restored.`))return;(v.items||[]).forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});savedInvoices.splice(savedInvoices.indexOf(v),1);persist();renderSalesReports();renderStockTable();refreshDash();toast('Invoice deleted')}
+ else if(b.dataset.d!==undefined){const v=cur.own[+b.dataset.d];if(!confirm(`Delete invoice ${v.invoiceNo}? Stock will be restored.`))return;(v.items||[]).forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});window.ceDeleteRecord&&window.ceDeleteRecord('ce_all_bills',v);savedInvoices.splice(savedInvoices.indexOf(v),1);persist();renderSalesReports();renderStockTable();refreshDash();toast('Invoice deleted')}
  else if(b.dataset.p!==undefined){const v=cur.own[+b.dataset.p];if(v.items)printHTML(bill(v),v);else alert('This old bill has no item details, so a copy cannot be printed.')}
  else if(b.id==='rClr'){['rF','rT','rM','rC','rI'].forEach(k=>$(k).value='');renderSalesReports()}
  else if(b.id==='rV'){const m=modal(`<div class="vbar"><b>${title()}</b><span><button id="vp">🖨 Print / Save PDF</button> <button onclick="this.closest('.cem').remove()">✕ Close (Esc)</button></span></div><div class="paper wide">${tbl(cur,false)}</div>`,'full');m.querySelector('#vp').onclick=()=>printHTML(`<div class="nb"><h3 style="text-align:center">${title()}</h3>${tbl(cur,false)}</div>`)}
@@ -2017,12 +2012,19 @@ const dl=(blob,n)=>{const a=document.createElement('a');a.href=URL.createObjectU
 function xls(){const d=cur,h='<html><meta charset="utf-8"><body><table border="1"><tr>'+d.head.map(x=>`<th>${x}</th>`).join('')+'</tr>'+d.body.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+(d.foot?'<tr>'+d.foot.map(c=>`<td><b>${esc(c)}</b></td>`).join('')+'</tr>':'')+'</table></body></html>';dl(new Blob([h],{type:'application/vnd.ms-excel'}),'Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.xls');toast('Excel downloaded')}
 function pdf(){const J=window.jspdf;if(!J||!J.jsPDF){alert('PDF library not loaded (internet needed). Use View > Print > Save as PDF.');return}const doc=new J.jsPDF({orientation:'landscape'});doc.setFontSize(12);doc.text(title(),14,12);doc.autoTable({head:[cur.head],body:cur.body.concat(cur.foot?[cur.foot]:[]),startY:18,styles:{fontSize:7,textColor:0,lineColor:0,lineWidth:.1},headStyles:{fillColor:[0,0,0],textColor:255}});doc.save('Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.pdf');toast('PDF downloaded')}
 /* v12 */
-window.stkDelItem=function(id){const p=inventory.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete item "${p.name}"?`+(p.outward>0?`\nIt has sales history (${p.outward} sold).`:'')))return;inventory=inventory.filter(x=>x.id!==id);led=led.filter(l=>l.pid!==id);persist();renderStockTable();populateDropdown();renderMasterTables();mrefresh();toast('Item deleted')};
+window.stkDelItem=function(id){const p=inventory.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete item "${p.name}"?`+(p.outward>0?`\nIt has sales history (${p.outward} sold).`:'')))return;led.filter(l=>l.pid===id).forEach(l=>window.ceDeleteRecord&&window.ceDeleteRecord('ce_stock_ledger',l));window.ceDeleteRecord&&window.ceDeleteRecord('ce_inventory_v4',p);inventory=inventory.filter(x=>x.id!==id);led=led.filter(l=>l.pid!==id);persist();renderStockTable();populateDropdown();renderMasterTables();mrefresh();toast('Item deleted')};
 $('stockHsn').insertAdjacentHTML('afterend','<button id="stkPrint" class="ib" style="padding:7px 12px!important;font-weight:700">🖨 Print Stock Report</button>');
 $('stkPrint').onclick=()=>{const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim();const L=inventory.filter(p=>(!q||p.name.toLowerCase().includes(q))&&(!h||String(p.hsn).includes(h)));
  printHTML(`<div class="nb"><h3 style="text-align:center;margin:0 0 4px">${esc(activeShop.title)}</h3><div style="text-align:center;margin-bottom:8px"><b>STOCK REPORT</b> &nbsp;|&nbsp; ${dmy(today())}</div><table class="rt"><tr><th>S.No</th><th>Item</th><th>HSN</th><th>UOM</th><th>Rate</th><th>Inward</th><th>Outward</th><th>Balance</th></tr>${L.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.hsn)}</td><td>${esc(p.uom)}</td><td>${f2(p.defaultRate)}</td><td>${p.inward}</td><td>${p.outward}</td><td><b>${p.inward-p.outward}</b></td></tr>`).join('')}</table></div>`)};
 const mt=$('mSupName').closest('.rounded-2xl'),pt=$('mProdName').closest('.rounded-2xl');
 [mt,pt].forEach(c=>{const w=c.querySelector('.overflow-x-auto');if(w)w.style.display='none'});
+// Shared Customer/Supplier party master with phone number.
+if(!$('mCuName')){
+ const party=document.createElement('div');party.className='bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4';party.style.gridColumn='1 / -1';
+ party.innerHTML=`<h4 class="text-sm font-bold text-emerald-300 uppercase tracking-wider">Shared Customer / Supplier Master</h4><p class="text-xs text-slate-400">Add a party once. The same name and contact details are available for billing and purchase entry.</p><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs"><input id="mCuName" placeholder="Customer / Supplier Name *" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"><input id="mCuPhone" type="tel" maxlength="15" placeholder="Mobile Number" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"><input id="mCuGst" placeholder="GSTIN (optional)" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white uppercase font-mono"><input id="mCuAddr" placeholder="Address / Town" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"><button id="mCuSave" type="button" class="sm:col-span-2 lg:col-span-4 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2 rounded-lg">+ Save to Shared Master</button></div><div id="mCuRep" class="overflow-x-auto"></div>`;
+ mt.parentElement.insertBefore(party,mt);
+}
+
 const mk=(id,l)=>`<button type="button" class="mArrow" data-k="${id}" data-l="${l}">▼ Show ${l}</button><div id="${id}" class="mrep" style="display:none"></div>`;
 mt.querySelector('button[onclick="saveSupplierMaster()"]').insertAdjacentHTML('afterend',mk('mSupRep','Saved Suppliers'));
 pt.querySelector('button[onclick="saveProductMaster()"]').insertAdjacentHTML('afterend',mk('mProdRep','Saved Products'));
@@ -2032,8 +2034,8 @@ function mrefresh(){const a=$('mSupRep'),b=$('mProdRep'),ic=(k,i)=>`<button clas
 window.mrefresh=mrefresh;
 $('tabMaster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset,sv=()=>localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));
  if(D.k){const d=$(D.k),o=d.style.display==='none';d.style.display=o?'block':'none';b.textContent=(o?'▲ Hide ':'▼ Show ')+D.l;mrefresh()}
- else if(D.se){const s=suppliers.find(x=>x.id==D.se),n=prompt('Supplier name',s.name);if(n===null)return;s.name=n.replace(/[<>]/g,'')||s.name;s.gstin=prompt('GSTIN',s.gstin||'')||'';s.phone=prompt('Phone',s.phone||'')||'';s.email=prompt('Email',s.email||'')||'';s.addr=prompt('Address',s.addr||'')||'';sv();renderMasterTables();mrefresh();toast('Supplier updated')}
- else if(D.sd){if(!confirm('Delete this supplier?'))return;suppliers=suppliers.filter(x=>x.id!=D.sd);sv();renderMasterTables();mrefresh();toast('Supplier deleted')}
+ else if(D.se){const s=suppliers.find(x=>x.id==D.se);if(!s)return;const oldName=s.name,n=prompt('Supplier / Party name',s.name);if(n===null)return;s.name=n.replace(/[<>]/g,'').trim()||s.name;s.gstin=prompt('GSTIN',s.gstin||'')||'';s.phone=prompt('Phone',s.phone||'')||'';s.email=prompt('Email',s.email||'')||'';s.addr=prompt('Address',s.addr||'')||'';const c=CUST.find(x=>x.name.toLowerCase()===oldName.toLowerCase()||x.name.toLowerCase()===s.name.toLowerCase());if(c){c.name=s.name;c.gstin=s.gstin;c.phone=s.phone;c.addr=s.addr;saveCust()}else upsertCust(s.name,s.addr,s.gstin,false,s.phone);sv();syncSharedPartyMaster();renderMasterTables();mrefresh();custRep();toast('Party updated')}
+ else if(D.sd){const s=suppliers.find(x=>x.id==D.sd);if(!confirm('Delete this party from the shared Master?'))return;if(s){window.ceDeleteRecord&&window.ceDeleteRecord('ce_suppliers',s);CUST.filter(x=>x.name.toLowerCase()===s.name.toLowerCase()).forEach(c=>window.ceDeleteRecord&&window.ceDeleteRecord('ce_customers',c));CUST=CUST.filter(x=>x.name.toLowerCase()!==s.name.toLowerCase())}suppliers=suppliers.filter(x=>x.id!=D.sd);saveCust();sv();renderMasterTables();mrefresh();custRep();toast('Party deleted')}
  else if(D.pe){stkEdit(+D.pe);mrefresh()}
  else if(D.pd)stkDelItem(+D.pd)});
 ['saveSupplierMaster','saveProductMaster'].forEach(n=>{const o=window[n];window[n]=function(){o();mrefresh()}});
@@ -2057,26 +2059,42 @@ function acSup(inp,fill){ac(inp,q=>suppliers.filter(s=>!q||s.name.toLowerCase().
 acSup($('mSupName'),s=>{$('mSupGst').value=s.gstin||'';$('mSupPhone').value=s.phone||'';$('mSupEmail').value=s.email||'';$('mSupAddr').value=s.addr||''});
 /* v16: customer master, auto-fill, no browser pop-ups */
 const saveCust=()=>localStorage.setItem('ce_customers',JSON.stringify(CUST));
-function upsertCust(n,a,g,manual){n=(n||'').replace(/[<>]/g,'').trim();if(!n||n.toLowerCase()==='cash customer')return false;g=(g&&g!=='-')?g.toUpperCase():'';const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase());if(c){if(a)c.addr=a;if(g)c.gstin=g}else CUST.push({id:Date.now()+Math.random(),name:n,addr:a||'',gstin:g});saveCust();if(manual)toast('Customer saved');return true}
+function upsertCust(n,a,g,manual,phone){n=(n||'').replace(/[<>]/g,'').trim();if(!n||n.toLowerCase()==='cash customer')return false;g=(g&&g!=='-')?g.toUpperCase():'';phone=(phone||'').trim();const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase());if(c){if(a)c.addr=a;if(g)c.gstin=g;if(phone)c.phone=phone}else CUST.push({id:Date.now()+Math.random(),name:n,addr:a||'',gstin:g,phone});saveCust();
+ // Customer and Supplier are two uses of the same Party Master: mirror by name.
+ const sup=suppliers.find(x=>x.name.toLowerCase()===n.toLowerCase());if(sup){if(a)sup.addr=a;if(g)sup.gstin=g;if(phone)sup.phone=phone}else suppliers.push({id:Date.now()+Math.random(),name:n,addr:a||'',gstin:g,phone,email:''});localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));
+ if(manual)toast('Party saved to shared Master');return true}
+function syncSharedPartyMaster(){
+ const norm=x=>String(x||'').trim().toLowerCase();
+ const uniqueSup=new Map();
+ suppliers.forEach(x=>{if(!x||!x.name)return;const k=norm(x.name),old=uniqueSup.get(k);if(old){['gstin','phone','email','addr'].forEach(f=>{if(!old[f]&&x[f])old[f]=x[f]})}else uniqueSup.set(k,{...x})});
+ suppliers=[...uniqueSup.values()];
+ const uniqueCust=new Map();
+ CUST.forEach(x=>{if(!x||!x.name)return;const k=norm(x.name),old=uniqueCust.get(k);if(old){['gstin','phone','addr'].forEach(f=>{if(!old[f]&&x[f])old[f]=x[f]})}else uniqueCust.set(k,{...x})});
+ CUST=[...uniqueCust.values()];
+ suppliers.forEach(s=>{let c=CUST.find(x=>norm(x.name)===norm(s.name));if(!c)CUST.push({id:s.id||Date.now()+Math.random(),name:s.name,addr:s.addr||'',gstin:s.gstin||'',phone:s.phone||''});else{if(!c.addr)c.addr=s.addr||'';if(!c.gstin)c.gstin=s.gstin||'';if(!c.phone)c.phone=s.phone||''}});
+ CUST.forEach(c=>{let su=suppliers.find(x=>norm(x.name)===norm(c.name));if(!su)suppliers.push({id:c.id||Date.now()+Math.random(),name:c.name,addr:c.addr||'',gstin:c.gstin||'',phone:c.phone||'',email:''});else{if(!su.addr)su.addr=c.addr||'';if(!su.gstin)su.gstin=c.gstin||'';if(!su.phone)su.phone=c.phone||''}});
+ saveCust();localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));
+}
+syncSharedPartyMaster();
 const _sv=window.executeSaveAndPrint;
-window.executeSaveAndPrint=function(){const n=savedInvoices.length,nm=$('billCustName').value,ad=$('billCustAddress').value.trim(),gs=$('billCustGstin').value.trim();_sv();if(savedInvoices.length>n&&nm.trim()&&!CUST.some(c=>c.name.toLowerCase()===nm.trim().toLowerCase())){upsertCust(nm,ad,gs);mrefresh()}};
+window.executeSaveAndPrint=function(){const n=savedInvoices.length,nm=$('billCustName').value,ad=$('billCustAddress').value.trim(),gs=$('billCustGstin').value.trim(),ph=$('billCustPhone').value.trim();_sv();if(savedInvoices.length>n&&nm.trim()){upsertCust(nm,ad,gs,false,ph);mrefresh()}};
 $('billCustName').removeAttribute('list');
-['billCustName','billCustAddress','billCustGstin'].forEach(k=>{const e=$(k);e.setAttribute('autocomplete','nope');e.setAttribute('name','x'+k+Math.random().toString(36).slice(2,6));e.setAttribute('spellcheck','false')});
+['billCustName','billCustPhone','billCustAddress','billCustGstin'].forEach(k=>{const e=$(k);e.setAttribute('autocomplete','nope');e.setAttribute('name','x'+k+Math.random().toString(36).slice(2,6));e.setAttribute('spellcheck','false')});
 document.addEventListener('focusin',e=>{const t=e.target;if(t.tagName==='INPUT'&&!t.getAttribute('autocomplete'))t.setAttribute('autocomplete','off')},true);
-$('billCustName').addEventListener('input',e=>{const c=CUST.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());if(c){if(!$('billCustAddress').value)$('billCustAddress').value=c.addr||'';if(!$('billCustGstin').value)$('billCustGstin').value=c.gstin||''}});
+$('billCustName').addEventListener('input',e=>{const c=CUST.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());if(c)fillCust({customerName:c.name,customerPhone:c.phone||'',customerAddress:c.addr||'',customerGstin:c.gstin||'-'})});
 /* Add New Customer panel removed */
-function custRep(){const d=$('mCuRep');if(!d||d.style.display==='none')return;d.innerHTML=`<table class="rt"><tr><th>Name</th><th>Address</th><th>GSTIN</th><th>Actions</th></tr>${CUST.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.addr||'-')}</td><td>${esc(c.gstin||'-')}</td><td style="white-space:nowrap"><button class="ib" data-ce="${c.id}" title="Edit">✏</button> <button class="ib" data-cd="${c.id}" title="Delete">🗑</button></td></tr>`).join('')||'<tr><td colspan="4">No customers saved yet</td></tr>'}</table>`}
+function custRep(){const d=$('mCuRep');if(!d||d.style.display==='none')return;d.innerHTML=`<table class="rt"><tr><th>Name</th><th>Phone</th><th>Address</th><th>GSTIN</th><th>Actions</th></tr>${CUST.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone||'-')}</td><td>${esc(c.addr||'-')}</td><td>${esc(c.gstin||'-')}</td><td style="white-space:nowrap"><button class="ib" data-ce="${c.id}" title="Edit">✏</button> <button class="ib" data-cd="${c.id}" title="Delete">🗑</button></td></tr>`).join('')||'<tr><td colspan="5">No customers saved yet</td></tr>'}</table>`}
 const _mr0=mrefresh;mrefresh=function(){_mr0();custRep()};window.mrefresh=mrefresh;
 $('tabMaster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset;
- if(b.id==='mCuSave'){const n=$('mCuName').value.trim();if(!n){alert('Customer name is required');return}const g=$('mCuGst').value.trim().toUpperCase();if(g&&!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){alert('GSTIN format is invalid');return}upsertCust(n,$('mCuAddr').value.trim(),g,true);['mCuName','mCuAddr','mCuGst'].forEach(k=>$(k).value='');mrefresh()}
- else if(D.ce){const c=CUST.find(x=>x.id==D.ce),n=prompt('Customer name',c.name);if(n===null)return;c.name=n.replace(/[<>]/g,'')||c.name;c.addr=prompt('Address',c.addr||'')||'';c.gstin=(prompt('GSTIN',c.gstin||'')||'').toUpperCase();saveCust();custRep();toast('Customer updated')}
- else if(D.cd){if(!confirm('Delete this customer?'))return;CUST=CUST.filter(x=>x.id!=D.cd);saveCust();custRep();toast('Customer deleted')}});
+ if(b.id==='mCuSave'){const n=$('mCuName').value.trim();if(!n){alert('Customer name is required');return}const g=$('mCuGst').value.trim().toUpperCase();if(g&&!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)){alert('GSTIN format is invalid');return}upsertCust(n,$('mCuAddr').value.trim(),g,true,$('mCuPhone').value.trim());['mCuName','mCuAddr','mCuGst','mCuPhone'].forEach(k=>$(k).value='');mrefresh()}
+ else if(D.ce){const c=CUST.find(x=>x.id==D.ce);if(!c)return;const oldName=c.name,n=prompt('Customer / Party name',c.name);if(n===null)return;c.name=n.replace(/[<>]/g,'').trim()||c.name;c.addr=prompt('Address',c.addr||'')||'';c.gstin=(prompt('GSTIN',c.gstin||'')||'').toUpperCase();c.phone=prompt('Phone',c.phone||'')||'';saveCust();const su=suppliers.find(x=>x.name.toLowerCase()===oldName.toLowerCase()||x.name.toLowerCase()===c.name.toLowerCase());if(su){su.name=c.name;su.addr=c.addr;su.gstin=c.gstin;su.phone=c.phone;localStorage.setItem('ce_suppliers',JSON.stringify(suppliers))}else{upsertCust(c.name,c.addr,c.gstin,false,c.phone)}syncSharedPartyMaster();custRep();mrefresh();toast('Party updated')}
+ else if(D.cd){const c=CUST.find(x=>x.id==D.cd);if(!confirm('Delete this party from the shared Master?'))return;if(c){window.ceDeleteRecord&&window.ceDeleteRecord('ce_customers',c);suppliers.filter(x=>x.name.toLowerCase()===c.name.toLowerCase()).forEach(s=>window.ceDeleteRecord&&window.ceDeleteRecord('ce_suppliers',s));suppliers=suppliers.filter(x=>x.name.toLowerCase()!==c.name.toLowerCase())}CUST=CUST.filter(x=>x.id!=D.cd);saveCust();localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));custRep();mrefresh();toast('Party deleted')}});
 /* v17: remarks row, purchase entry, supplier details auto-store */
 $('billItemsTableBody').closest('.overflow-x-auto').insertAdjacentHTML('afterend','<div class="rmrow"><label for="billRemarks">Remarks</label><input id="billRemarks" maxlength="160" autocomplete="off" placeholder="Remarks"></div>');
 const SG=/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
-function upsertSup(n,g,a){n=(n||'').replace(/[<>]/g,'').trim();if(!n)return;g=(g||'').trim().toUpperCase();a=(a||'').trim();const x=suppliers.find(y=>y.name.toLowerCase()===n.toLowerCase());
- if(x){if(g)x.gstin=g;if(a)x.addr=a}else{suppliers.push({id:Date.now()+Math.random(),name:n,gstin:g,phone:'',email:'',addr:a});toast('Supplier saved to Master')}
- localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));renderMasterTables();mrefresh()}
+function upsertSup(n,g,a){n=(n||'').replace(/[<>]/g,'').trim();if(!n)return;g=(g||'').trim().toUpperCase();a=(a||'').trim();let x=suppliers.find(y=>y.name.toLowerCase()===n.toLowerCase());
+ if(x){if(g)x.gstin=g;if(a)x.addr=a}else{suppliers.push(x={id:Date.now()+Math.random(),name:n,gstin:g,phone:'',email:'',addr:a});toast('Party saved to shared Master')}
+ localStorage.setItem('ce_suppliers',JSON.stringify(suppliers));upsertCust(n,a,g,false,x.phone||'');renderMasterTables();mrefresh();custRep()}
 $('stkPrint').insertAdjacentHTML('afterend',' <button id="stkPur" class="ib" style="padding:7px 12px!important;font-weight:700">➕ Purchase Entry</button>');
 $('stkPur').onclick=purchase;
 function purchase(){
@@ -2198,8 +2216,177 @@ const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4)
 const U=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){return[]}},SV=a=>localStorage.setItem(K,JSON.stringify(a));
 const H=async x=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ce|'+x));return[...new Uint8Array(b)].map(y=>y.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'ce|'+x)h=(h*33^c.charCodeAt(0))>>>0;return'x'+h}};
 const em=u=>u+'@cityelectricals.app';
+
+/* ===== Firestore multi-device data sync =====
+   Business records are stored as individual documents, not one giant document.
+   The localStorage UI remains intact; writes are mirrored to Firestore after login.
+*/
+const CE_DATA_MAP={
+  ce_all_bills:{collection:'bills', id:x=>String(x.shopId||'shop')+'__'+String(x.invoiceNo||x.id||'bill')},
+  ce_inventory_v4:{collection:'inventory', id:x=>String(x.id)},
+  ce_suppliers:{collection:'suppliers', id:x=>String(x.id)},
+  ce_customers:{collection:'customers', id:x=>String(x.id)},
+  ce_stock_ledger:{collection:'stockLedger', id:x=>String(x.id)},
+  ce_custom_items:{collection:'customItems', id:x=>String((x&&typeof x==='object'&&(x.id||x.name||x.value||x.item))||ceHash(ceCanon(x)) )},
+  ce_counters:{collection:'appSettings', single:'counters'},
+  ce_theme:{collection:'appSettings', single:'theme'}
+};
+let ceCloudApplying=false, ceCloudLoadDone=false, ceCloudReloading=false;
+let ceAuthReadyResolve; const ceAuthReady=new Promise(resolve=>{ceAuthReadyResolve=resolve});
+auth.onAuthStateChanged(()=>{if(ceAuthReadyResolve){ceAuthReadyResolve();ceAuthReadyResolve=null}});
+const ceOriginalSetItem=Storage.prototype.setItem;
+const cePending=new Map();
+function ceSafeDocId(x){return String(x||'record').replace(/[\\/#?\[\]]/g,'_').slice(0,1400)||'record'}
+function ceCanon(v){
+  if(Array.isArray(v))return '['+v.map(ceCanon).join(',')+']';
+  if(v&&typeof v==='object')return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+ceCanon(v[k])).join(',')+'}';
+  return JSON.stringify(v);
+}
+function ceHash(s){
+  let h1=5381,h2=2166136261;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=((h1*33)^c)>>>0;h2=Math.imul(h2^c,16777619)>>>0}
+  return h1.toString(36)+h2.toString(36)+'.'+s.length;
+}
+/* Snapshot = what this browser already knows is in the cloud (id -> content hash). Used to write ONLY changed records. */
+const CE_SNAP_PREFIX='ce_sync_snap_';
+function ceGetSnap(key){try{return JSON.parse(localStorage.getItem(CE_SNAP_PREFIX+key)||'{}')||{}}catch(e){return{}}}
+function ceSetSnap(key,o){try{ceOriginalSetItem.call(localStorage,CE_SNAP_PREFIX+key,JSON.stringify(o))}catch(e){}}
+/* Pending deletes = records the user explicitly deleted in the app; kept until Firestore confirms. */
+function ceDelList(){try{return JSON.parse(localStorage.getItem('ce_sync_del')||'[]')||[]}catch(e){return[]}}
+function ceSetDelList(a){try{ceOriginalSetItem.call(localStorage,'ce_sync_del',JSON.stringify(a))}catch(e){}}
+
+async function ceWriteCollection(key, raw){
+  await ceAuthReady;
+  if(!auth.currentUser||ceCloudApplying)return;
+  const map=CE_DATA_MAP[key]; if(!map)return;
+  let parsed; try{parsed=JSON.parse(raw)}catch(e){return}
+  const col=db.collection(map.collection);
+  const snap=ceGetSnap(key);
+  if(map.single){            // one small settings document (counters, theme)
+    if(parsed===null||parsed===undefined)return;
+    const h=ceHash(ceCanon(parsed));
+    if(snap.v===h)return;
+    await col.doc(map.single).set({value:parsed,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    ceSetSnap(key,{v:h});
+    return;
+  }
+  if(!Array.isArray(parsed))return;
+  const changed=[];
+  for(const item of parsed){
+    if(!item||typeof item!=='object')continue;
+    const id=ceSafeDocId(map.id(item)), h=ceHash(ceCanon(item));
+    if(snap[id]!==h)changed.push({id,item,h});
+  }
+  if(!changed.length)return;          // nothing changed: no reads, no writes
+  const done={...snap};
+  for(let i=0;i<changed.length;i+=400){
+    const part=changed.slice(i,i+400), batch=db.batch();
+    part.forEach(c=>batch.set(col.doc(c.id),{...c.item,_ceSyncVersion:1,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
+    await batch.commit();
+    part.forEach(c=>{done[c.id]=c.h});
+    ceSetSnap(key,done);
+  }
+}
+function ceQueueWrite(key,value){
+  if(!CE_DATA_MAP[key]||ceCloudApplying)return;
+  const prev=cePending.get(key)||Promise.resolve();
+  const next=prev.catch(()=>{}).then(()=>ceWriteCollection(key,value)).catch(e=>console.error('Firestore sync failed for '+key,e));
+  cePending.set(key,next);
+}
+Storage.prototype.setItem=function(key,value){
+  ceOriginalSetItem.call(this,key,value);
+  if(this===localStorage&&CE_DATA_MAP[key]&&!ceCloudApplying)ceQueueWrite(key,String(value));
+};
+
+/* ---- Explicit delete: only a record the user deleted in the app is removed from Firestore ---- */
+async function ceFlushDeletes(){
+  await ceAuthReady;
+  if(!auth.currentUser)return;
+  for(;;){
+    const list=ceDelList(); if(!list.length)return;
+    const part=list.slice(0,200), batch=db.batch();
+    part.forEach(d=>{
+      const m=CE_DATA_MAP[d.k]; if(!m||m.single)return;
+      batch.delete(db.collection(m.collection).doc(d.id));
+      batch.set(db.collection('deletedRecords').doc(m.collection+'__'+d.id),{col:m.collection,id:d.id,at:firebase.firestore.FieldValue.serverTimestamp()});
+    });
+    await batch.commit();
+    ceSetDelList(ceDelList().filter(x=>!part.some(p=>p.k===x.k&&p.id===x.id)));
+    part.forEach(d=>{const sn=ceGetSnap(d.k);if(sn[d.id]!==undefined){delete sn[d.id];ceSetSnap(d.k,sn)}});
+  }
+}
+window.ceDeleteRecord=function(key,rec){
+  const map=CE_DATA_MAP[key]; if(!map||map.single||!rec||typeof rec!=='object')return;
+  const id=ceSafeDocId(map.id(rec)), list=ceDelList();
+  if(!list.some(d=>d.k===key&&d.id===id)){list.push({k:key,id});ceSetDelList(list)}
+  const prev=cePending.get(key)||Promise.resolve();
+  cePending.set(key,prev.catch(()=>{}).then(ceFlushDeletes).catch(e=>console.error('Firestore delete failed',e)));
+};
+function ceFlushAll(){return Promise.all([...cePending.values()].map(p=>p.catch(()=>{})))}
+async function ceReadTombstones(){
+  const out={}, add=(c,i)=>{(out[c]=out[c]||new Set()).add(i)};
+  const snap=await db.collection('deletedRecords').get();
+  snap.forEach(doc=>{const d=doc.data();if(d&&d.col&&d.id)add(d.col,d.id)});
+  ceDelList().forEach(d=>{const m=CE_DATA_MAP[d.k];if(m&&!m.single)add(m.collection,d.id)});
+  return out;
+}
+
+async function ceReadCollection(key){
+  const map=CE_DATA_MAP[key], col=db.collection(map.collection);
+  if(map.single){const d=await col.doc(map.single).get();const x=d.exists?d.data():null;return x&&x.value!==undefined?x.value:null}
+  const snap=await col.get(), out=[];
+  snap.forEach(doc=>{const d=doc.data();if(d){delete d._ceSyncVersion;delete d.updatedAt;out.push(d)}});
+  return out;
+}
+window.ceCloudLoadAndReload=async function(username){
+  if(!FB||!auth.currentUser||ceCloudReloading)return;
+  ceCloudReloading=true;
+  const keys=Object.keys(CE_DATA_MAP);
+  try{await ceFlushDeletes()}catch(e){console.error('Pending deletes not sent yet',e)}
+  const tomb=await ceReadTombstones();
+  try{
+    ceCloudApplying=true;
+    for(const key of keys){
+      const map=CE_DATA_MAP[key];
+      const cloud=await ceReadCollection(key);
+      const local=localStorage.getItem(key);
+      let localValue=null; try{localValue=local?JSON.parse(local):null}catch(e){}
+      if(map.single){
+        ceSetSnap(key,cloud!==null&&cloud!==undefined?{v:ceHash(ceCanon(cloud))}:{});
+        let merged;
+        if(key==='ce_counters'){           // invoice counters: always keep the HIGHER number so numbers never go backwards
+          merged={...(localValue&&typeof localValue==='object'?localValue:{})};
+          if(cloud&&typeof cloud==='object')for(const k in cloud){const a=Number(merged[k]),b=Number(cloud[k]);merged[k]=(isNaN(a)||b>a)?cloud[k]:merged[k]}
+          if(!Object.keys(merged).length)merged=null;
+        } else merged=(cloud!==null&&cloud!==undefined)?cloud:localValue;
+        if(merged!==null&&merged!==undefined)localStorage.setItem(key,JSON.stringify(merged));
+      } else {
+        const gone=tomb[map.collection]||new Set();
+        const keep=item=>item&&typeof item==='object'&&!gone.has(ceSafeDocId(map.id(item)));
+        const base={};
+        if(Array.isArray(cloud))cloud.forEach(it=>{if(keep(it))base[ceSafeDocId(map.id(it))]=ceHash(ceCanon(it))});
+        ceSetSnap(key,base);   // baseline = what the cloud already has
+        const merged=new Map();
+        if(Array.isArray(localValue))localValue.forEach(item=>{if(keep(item))merged.set(ceSafeDocId(map.id(item)),item)});
+        if(Array.isArray(cloud))cloud.forEach(item=>{if(keep(item))merged.set(ceSafeDocId(map.id(item)),item)});
+        const combined=[...merged.values()];
+        if(combined.length||local)localStorage.setItem(key,JSON.stringify(combined));
+      }
+    }
+    ceCloudLoadDone=true;
+  } finally {ceCloudApplying=false;}
+  // Push only the records that exist locally but not in the cloud yet.
+  for(const key of keys){const raw=localStorage.getItem(key);if(raw)await ceWriteCollection(key,raw)}
+  // The app's arrays are initialized during page load, so reload after cloud data has been applied.
+  localStorage.setItem('ce_cloud_sync_user',username||'');
+  localStorage.setItem(SK,JSON.stringify({u:username,role:'admin',day:today()}));
+  if(!sessionStorage.getItem('ce_cloud_reloaded')){
+    sessionStorage.setItem('ce_cloud_reloaded','1'); location.reload();
+    await new Promise(resolve=>setTimeout(resolve,1200));
+  }
+};
 async function fb(path,body){let r,j;try{r=await fetch('https://identitytoolkit.googleapis.com/v1/'+path+'?key='+FIREBASE_API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json()}catch(e){throw new Error('NO_INTERNET')}if(!r.ok)throw new Error((j.error&&j.error.message)||'FIREBASE_ERROR');return j}
-const fbMsg=c=>/INVALID_LOGIN|EMAIL_NOT_FOUND|INVALID_PASSWORD/.test(c)?'Wrong username or password':/EMAIL_EXISTS/.test(c)?'Username already exists':/OPERATION_NOT_ALLOWED/.test(c)?'Email/Password sign-in is not enabled in Firebase':/NO_INTERNET/.test(c)?'No internet connection':/WEAK_PASSWORD/.test(c)?'Password is too weak (min 6 characters)':c;
+const fbMsg=c=>/INVALID_LOGIN|EMAIL_NOT_FOUND|INVALID_PASSWORD|INVALID_CREDENTIAL/.test(c)?'Wrong username or password':/EMAIL_EXISTS/.test(c)?'Username already exists':/OPERATION_NOT_ALLOWED/.test(c)?'Email/Password sign-in is not enabled in Firebase':/NO_INTERNET/.test(c)?'No internet connection':/WEAK_PASSWORD/.test(c)?'Password is too weak (min 6 characters)':/permission-denied|Missing or insufficient permissions/i.test(c)?'Firestore permission denied. Please update Firestore Rules for signed-in users.':c;
 document.body.insertAdjacentHTML('beforeend',`<div id="loginScreen"><div class="lg" id="lbox"><svg viewBox="0 0 680 470" preserveAspectRatio="none"><defs><linearGradient id="lgO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#f97316"/></linearGradient><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#99f6e4"/><stop offset="1" stop-color="#14b8a6"/></linearGradient><filter id="lgG" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
 <g fill="none" stroke="#f59e0b" stroke-width="1.6" opacity=".75"><path d="M119 190H84L64 170H20M119 200H70M119 212H44M119 224H70L52 242H18M119 236H96L80 254H40M150 150V112L138 100V60M165 147V84M181 147V96L192 85V44M150 270V318L138 330V372M170 273V348M192 270V324L210 342V396M111 192h8M111 204h8M111 216h8M111 228h8"/></g>
 <g fill="none" stroke="#2dd4bf" stroke-width="1.6" opacity=".8"><path d="M231 192H296L322 166H420L448 138H640M231 202H306L332 176H430L458 148H660M231 214H316L342 188H450L478 160H610M231 226H286L304 244H350M231 238H270L290 258H330M205 147V100L222 83H300M240 160L262 140H340L360 120H520"/></g>
@@ -2214,10 +2401,10 @@ const sess=()=>{try{const x=JSON.parse(localStorage.getItem(SK)||'null');return 
 const msg=(t,bad)=>{$('lMsg').textContent=t;$('lMsg').style.color=bad?'#fda4af':'#cbd5e1'};
 function who(){const u=sess();$('topStrip').firstElementChild.textContent='V Shadow - City Electricals'+(u?'   |   👤 '+u.u:'');const r=$('topStrip').lastElementChild;
  if(u&&!$('outBtn')){r.insertAdjacentHTML('afterbegin',(u.role==='admin'&&!FB?'<button id="usrBtn" title="Users (max 5)">👥</button>':'')+'<button id="outBtn" class="lo" title="Logout">⏻ Logout</button>');if($('usrBtn'))$('usrBtn').onclick=users;$('outBtn').onclick=logout}}
-function logout(){if(typeof currentBillItems!=='undefined'&&currentBillItems.length&&!confirm('The current bill has unsaved items. Logout anyway?'))return;localStorage.removeItem(SK);sessionStorage.setItem('ce_skip','1');window.__noUnload=1;location.reload()}
+async function logout(){if(typeof currentBillItems!=='undefined'&&currentBillItems.length&&!confirm('The current bill has unsaved items. Logout anyway?'))return;window.__noUnload=1;try{await ceFlushAll();await ceFlushDeletes()}catch(e){console.error('Pending cloud sync before logout failed',e)}try{if(typeof auth!=='undefined'&&auth.currentUser)await auth.signOut()}catch(e){console.error('Firebase sign out failed',e)}localStorage.removeItem(SK);sessionStorage.removeItem('ce_cloud_reloaded');sessionStorage.setItem('ce_skip','1');location.reload()}
 addEventListener('beforeunload',e=>{if(!window.__noUnload&&sess()&&typeof currentBillItems!=='undefined'&&currentBillItems.length){e.preventDefault();e.returnValue=''}});
 function showLogin(){$('shopSelectScreen').style.display='none';$('loginScreen').style.display='flex';$('kbBar').style.display='none';msg('');setTimeout(()=>$('lUser').focus(),50)}
-function ok(m){localStorage.setItem(SK,JSON.stringify({u:m.u,role:m.role,day:today()}));document.querySelectorAll('.cem').forEach(x=>x.remove());$('loginScreen').style.display='none';$('shopSelectScreen').style.display='flex';$('kbBar').style.display='flex';$('lPass').value='';who()}
+function ok(m){sessionStorage.removeItem('ce_cloud_reloaded');localStorage.setItem(SK,JSON.stringify({u:m.u,role:m.role,day:today()}));document.querySelectorAll('.cem').forEach(x=>x.remove());$('loginScreen').style.display='none';$('shopSelectScreen').style.display='flex';$('kbBar').style.display='flex';$('lPass').value='';who()}
 async function go(){
   const u = cl($('lUser').value.trim().toLowerCase()), p = $('lPass').value;
   if (!u || !p) { msg('Enter username and password', 1); return; }
@@ -2226,15 +2413,16 @@ async function go(){
   try {
     if (FB) {
       // 1. Firebase Auth மூலம் லாகின் செய்வது
-      await fb('accounts:signInWithPassword', { email: em(u), password: p, returnSecureToken: true });
+      await auth.signInWithEmailAndPassword(em(u), p);
       
       // 2. Firestore Database-ல் யூசர் டேட்டா இருக்கிறதா என சரிபார்த்து இல்லையெனில் சேமிப்பது
       const userDocRef = db.collection("users").doc(u);
       const docSnap = await userDocRef.get();
       if (!docSnap.exists) {
-        await userDocRef.set({ username: u, email: em(u), createdAt: new Date() });
+        await userDocRef.set({ username: u, email: em(u), uid: auth.currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       }
 
+      await window.ceCloudLoadAndReload(u);
       ok({ u, role: 'admin' });
     } else {
       const a = U();
@@ -2264,7 +2452,7 @@ function setup(){const a=U(),need=false,m=document.createElement('div');m.classN
   try {
     if (FB) {
       // 1. Firebase Authentication-il account create seivathu
-      await fb('accounts:signUp', { email: em(u), password: p, returnSecureToken: true });
+      await auth.createUserWithEmailAndPassword(em(u), p);
       
       // 2. Firestore Database-il username-ai permanent-ah save seivathu (Ella system-um paarkalam)
       await db.collection("users").doc(u).set({
@@ -2273,6 +2461,7 @@ function setup(){const a=U(),need=false,m=document.createElement('div');m.classN
         createdAt: new Date()
       });
 
+      await window.ceCloudLoadAndReload(u);
       ok({ u, role: 'admin' });
     } else {
       const x = U();
@@ -2296,7 +2485,7 @@ function users(){const a=U(),m=document.createElement('div');m.className='cem';
  m.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.d!==undefined&&confirm('Delete this member?')){const x=U();x.splice(+b.dataset.d,1);SV(x);m.remove();users()}});
  document.body.appendChild(m)}
 let done=false;const _sk=window.skipSplash;
-window.skipSplash=function(){if(done)return;done=true;_sk();if(sess()){who();return}showLogin()};
+window.skipSplash=function(){if(done)return;done=true;_sk();if(sess()){sessionStorage.removeItem('ce_cloud_reloaded');who();return}showLogin()};
 if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTimeout(()=>window.skipSplash(),30)}
 })();
 </script>
