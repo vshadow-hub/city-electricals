@@ -2120,7 +2120,42 @@ const sc=$('stockTableBody').closest('.rounded-2xl');
 sc.insertAdjacentHTML('beforebegin','<div class="ltabs"><button data-t="new" class="on">📦 New Stock Ledger</button><button data-t="wip">🛠 WIP Stock Ledger</button><span id="ltHint"></span></div>');
 sc.insertAdjacentHTML('afterend','<div id="wipCard" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto" style="display:none"><table class="w-full text-left text-xs"><thead><tr><th class="p-3">Date</th><th class="p-3">Invoice</th><th class="p-3">Shop</th><th class="p-3">Customer</th><th class="p-3">Item</th><th class="p-3">HSN</th><th class="p-3">Qty</th><th class="p-3">UOM</th><th class="p-3">Rate</th><th class="p-3">Amount</th><th class="p-3">Status</th></tr></thead><tbody id="wipBody"></tbody></table></div>');
 $('ltHint').textContent='Items whose stock was added (Purchase Entry / + Stock).';
-function wipData(){const q=$('stockSearch').value.toLowerCase(),h=$('stockHsn').value.trim(),o=[];savedInvoices.forEach(v=>(v.items||[]).forEach(i=>{if(!i.wip)return;if((q&&!i.name.toLowerCase().includes(q))||(h&&!String(i.hsn).includes(h)))return;const p=inventory.find(x=>x.id===i.id);o.push({v,i,st:p&&p.inward>0?'Stock added later':'Pending stock'})}));return o.sort((a,b)=>a.v.date<b.v.date?1:a.v.date>b.v.date?-1:0)}
+
+function wipData(){
+  const q = $('stockSearch').value.toLowerCase();
+  const h = $('stockHsn').value.trim();
+  const o = [];
+
+  savedInvoices.forEach(v => {
+    // Show records from the currently selected branch only
+    if (!activeShop || v.shopId !== activeShop.id) return;
+
+    (v.items || []).forEach(i => {
+      if (!i.wip) return;
+
+      if (
+        (q && !i.name.toLowerCase().includes(q)) ||
+        (h && !String(i.hsn).includes(h))
+      ) return;
+
+      const p = inventory.find(x => x.id === i.id);
+
+      o.push({
+        v,
+        i,
+        st: p && p.inward > 0
+          ? 'Stock added later'
+          : 'Pending stock'
+      });
+    });
+  });
+
+  return o.sort((a, b) =>
+    a.v.date < b.v.date ? 1 :
+    a.v.date > b.v.date ? -1 : 0
+  );
+}
+
 const wipTot=L=>L.reduce((a,x)=>a+(+x.i.total||0),0);
 function renderWip(){const L=wipData();$('wipBody').innerHTML=L.map(x=>`<tr><td class="p-3">${dmy(x.v.date)}</td><td class="p-3">${esc(x.v.invoiceNo)}</td><td class="p-3">${SHN[x.v.shopId]||''}</td><td class="p-3">${esc(x.v.customerName)}</td><td class="p-3 font-bold">${esc(x.i.name)}</td><td class="p-3">${esc(x.i.hsn)}</td><td class="p-3">${x.i.qty}</td><td class="p-3">${esc(x.i.uom)}</td><td class="p-3">${f2(x.i.rate)}</td><td class="p-3">${f2(x.i.total)}</td><td class="p-3">${x.st}</td></tr>`).join('')||'<tr><td colspan="11" class="p-4">No WIP sales - every billed item has stock added.</td></tr>';
  if(L.length)$('wipBody').insertAdjacentHTML('beforeend',`<tr style="font-weight:900"><td class="p-3" colspan="9">TOTAL (${L.length} lines)</td><td class="p-3">${f2(wipTot(L))}</td><td></td></tr>`)}
@@ -2400,7 +2435,7 @@ document.body.insertAdjacentHTML('beforeend',`<div id="loginScreen"><div class="
 const sess=()=>{try{const x=JSON.parse(localStorage.getItem(SK)||'null');return x&&x.day===today()?x:null}catch(e){return null}};
 const msg=(t,bad)=>{$('lMsg').textContent=t;$('lMsg').style.color=bad?'#fda4af':'#cbd5e1'};
 function who(){const u=sess();$('topStrip').firstElementChild.textContent='V Shadow - City Electricals'+(u?'   |   👤 '+u.u:'');const r=$('topStrip').lastElementChild;
- if(u&&!$('outBtn')){r.insertAdjacentHTML('afterbegin',(u.role==='admin'&&!FB?'<button id="usrBtn" title="Users (max 5)">👥</button>':'')+'<button id="outBtn" class="lo" title="Logout">⏻ Logout</button>');if($('usrBtn'))$('usrBtn').onclick=users;$('outBtn').onclick=logout}}
+ if(u&&!$('outBtn')){r.insertAdjacentHTML('afterbegin',(u.role==='admin'&&!FB?'<button id="usrBtn" title="Users (max 3)">👥</button>':'')+'<button id="outBtn" class="lo" title="Logout">⏻ Logout</button>');if($('usrBtn'))$('usrBtn').onclick=users;$('outBtn').onclick=logout}}
 async function logout(){if(typeof currentBillItems!=='undefined'&&currentBillItems.length&&!confirm('The current bill has unsaved items. Logout anyway?'))return;window.__noUnload=1;try{await ceFlushAll();await ceFlushDeletes()}catch(e){console.error('Pending cloud sync before logout failed',e)}try{if(typeof auth!=='undefined'&&auth.currentUser)await auth.signOut()}catch(e){console.error('Firebase sign out failed',e)}localStorage.removeItem(SK);sessionStorage.removeItem('ce_cloud_reloaded');sessionStorage.setItem('ce_skip','1');location.reload()}
 addEventListener('beforeunload',e=>{if(!window.__noUnload&&sess()&&typeof currentBillItems!=='undefined'&&currentBillItems.length){e.preventDefault();e.returnValue=''}});
 function showLogin(){$('shopSelectScreen').style.display='none';$('loginScreen').style.display='flex';$('kbBar').style.display='none';msg('');setTimeout(()=>$('lUser').focus(),50)}
@@ -2465,7 +2500,7 @@ function setup(){const a=U(),need=false,m=document.createElement('div');m.classN
       ok({ u, role: 'admin' });
     } else {
       const x = U();
-      if (x.length >= 5) { E('Maximum 5 users allowed. No more users can be created.'); return; }
+      if (x.length >= 3) { E('Maximum 3 users allowed. No more users can be created.'); return; }
       if (x.some(y => y.u === u)) { E('Username already exists'); return; }
       
       const n = { u, h: await H(p), role: x.length ? 'member' : 'admin' };
@@ -2480,7 +2515,7 @@ function setup(){const a=U(),need=false,m=document.createElement('div');m.classN
  $('suOk').onclick=mk;m.addEventListener('keydown',e=>{if(e.key==='Enter')mk()});m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()})}
 $('lNew').onclick=setup;
 function users(){const a=U(),m=document.createElement('div');m.className='cem';
- m.innerHTML=`<div class="cemb"><div class="dt">👥 Users (${a.length}/5)</div><table class="rt">${a.map((x,i)=>`<tr><td>${cl(x.u)}</td><td>${x.role}</td><td>${x.role==='admin'?'':`<button class="ib" data-d="${i}">🗑</button>`}</td></tr>`).join('')}</table><p style="font-size:12px;color:#555">To add a member: log out and use "New User? Setup Admin" on the login page (maximum 5 users).</p></div>`;
+ m.innerHTML=`<div class="cemb"><div class="dt">👥 Users (${a.length}/5)</div><table class="rt">${a.map((x,i)=>`<tr><td>${cl(x.u)}</td><td>${x.role}</td><td>${x.role==='admin'?'':`<button class="ib" data-d="${i}">🗑</button>`}</td></tr>`).join('')}</table><p style="font-size:12px;color:#555">To add a member: log out and use "New User? Setup Admin" on the login page (maximum 3 users).</p></div>`;
  m.addEventListener('mousedown',e=>{if(e.target===m)m.remove()});
  m.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&b.dataset.d!==undefined&&confirm('Delete this member?')){const x=U();x.splice(+b.dataset.d,1);SV(x);m.remove();users()}});
  document.body.appendChild(m)}
