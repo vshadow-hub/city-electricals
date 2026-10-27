@@ -403,6 +403,13 @@ Enter Password ➔
 </div>
 </div>
 </div>
+
+<!-- ===== QUOTATION ENTRY BUTTON (MAIN BRANCH SELECT SCREEN) ===== -->
+<div class="w-full flex justify-center mt-7 mb-2">
+  <button type="button" onclick="ceOpenQuotationBranchPicker()" class="ce-quote-launch">
+    <span aria-hidden="true" style="font-size:1.15rem">◉</span> Quotation
+  </button>
+</div>
 </div>
 
 <!-- ================= 3. BALU TECH PASSWORD MODAL ================= -->
@@ -429,6 +436,57 @@ Enter Password ➔
 </div>
 </form>
 </div>
+</div>
+
+<!-- ================= QUOTATION BRANCH PICKER ================= -->
+<div id="ceQuoteBranchModal" class="ce-quote-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="ceQuoteBranchTitle">
+  <div class="ce-quote-modal-card">
+    <div class="ce-quote-modal-icon">▤</div>
+    <h2 id="ceQuoteBranchTitle">Create Quotation</h2>
+    <p>Select the branch for this quotation.</p>
+    <label for="ceQuoteBranchSelect">Branch Name</label>
+    <select id="ceQuoteBranchSelect">
+      <option value="shop1">CITY ELECTRICALS</option>
+      <option value="shop2">CITY ELECTRICALS / SAMUDRA</option>
+      <option value="shop3">BALU TECH</option>
+    </select>
+    <div class="ce-quote-modal-actions">
+      <button type="button" class="ce-q-btn ce-q-cancel" onclick="ceCloseQuotationBranchPicker()">Cancel</button>
+      <button type="button" class="ce-q-btn ce-q-primary" onclick="ceStartQuotation()">OK — Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= QUOTATION ENTRY SCREEN ================= -->
+<div id="ceQuotationScreen" class="ce-quotation-screen" style="display:none">
+  <div class="ce-quotation-topbar">
+    <div><div class="ce-quotation-eyebrow">CITY ELECTRICALS • DOCUMENTS</div><h2>Quotation Entry</h2><p id="ceQuoteBranchLabel">Selected branch</p></div>
+    <div class="ce-quotation-top-actions">
+      <button type="button" class="ce-q-btn ce-q-cancel" onclick="ceCloseQuotationScreen()">Back to Main Page</button>
+      <button type="button" class="ce-q-btn ce-q-add" onclick="ceSaveQuotation()">☁ Save Quotation</button>
+      <button type="button" class="ce-q-btn ce-q-primary" onclick="cePrintQuotation()">🖨 Print Quotation</button>
+    </div>
+  </div>
+  <div class="ce-quotation-paper">
+    <div class="ce-quotation-heading"><div><div class="ce-quotation-doc-label">PRICE OFFER</div><h1>QUOTATION</h1><div id="ceQuotePaperBranch" class="ce-quote-seller-name"></div></div><div class="ce-quote-meta"><label>Quotation No.<input id="ceQuoteNumber" type="text" placeholder="QT-001"></label><label>Date<input id="ceQuoteDate" type="date"></label></div></div>
+    <div class="ce-quote-customer-box"><h3>Customer Details</h3><div class="ce-quote-customer-grid"><label>Customer Name *<input id="ceQuoteCustomerName" type="text" placeholder="Enter customer name" autocomplete="name"></label><label>Phone Number<input id="ceQuoteCustomerPhone" type="tel" placeholder="Enter phone number" inputmode="tel" autocomplete="tel"></label><label class="ce-quote-address">Customer Address<textarea id="ceQuoteCustomerAddress" rows="2" placeholder="Enter customer address" autocomplete="street-address"></textarea></label></div></div>
+    <div class="ce-quote-items-head"><h3>Particulars</h3><button type="button" class="ce-q-btn ce-q-add" onclick="ceQuoteAddRow()">＋ Add Item</button></div>
+    <div class="ce-quote-table-wrap"><table class="ce-quote-table"><thead><tr><th style="width:48px">S.No.</th><th>Particulars / Description</th><th style="width:105px">Quantity</th><th style="width:130px">Rate (₹)</th><th style="width:140px">Amount (₹)</th><th class="ce-quote-action-col">Remove</th></tr></thead><tbody id="ceQuoteItemsBody"></tbody></table></div>
+    <div class="ce-quote-bottom"><label class="ce-quote-notes">Notes / Terms (optional)<textarea id="ceQuoteNotes" rows="3" placeholder="Validity, delivery, payment terms..."></textarea></label><div class="ce-quote-total-box"><div><span>Subtotal</span><strong id="ceQuoteSubtotal">₹0.00</strong></div><div class="ce-quote-grand"><span>Total Amount</span><strong id="ceQuoteGrandTotal">₹0.00</strong></div></div></div>
+    <div class="ce-quote-signoff"><span>Thank you for your enquiry.</span><span>Authorised Signature</span></div>
+  </div>
+  <p class="ce-quote-help">Customer GST number is not included. Save the quotation to Firebase before viewing it on another device.</p>
+  <div class="ce-quote-history">
+    <h3>Saved Quotations (Firebase)</h3>
+    <div class="ce-quote-search-row">
+      <input id="ceQuoteSearchText" type="search" placeholder="Search customer name or quotation number">
+      <select id="ceQuoteSearchBranch"><option value="">All branches</option><option value="shop1">CITY ELECTRICALS</option><option value="shop2">CITY ELECTRICALS / SAMUDRA</option><option value="shop3">BALU TECH</option></select>
+      <button type="button" class="ce-q-btn ce-q-primary" onclick="ceSearchQuotations()">Search</button>
+      <button type="button" class="ce-q-btn ce-q-cancel" onclick="ceLoadQuotations()">Show All</button>
+    </div>
+    <div id="ceQuoteHistoryStatus" class="ce-quote-help">Sign in, then load saved quotations.</div>
+    <div class="ce-quote-history-table-wrap"><table class="ce-quote-table"><thead><tr><th>Quotation No.</th><th>Date</th><th>Customer</th><th>Branch</th><th>Total</th><th>Action</th></tr></thead><tbody id="ceQuoteHistoryBody"></tbody></table></div>
+  </div>
 </div>
 
 <!-- ================= 4. MAIN APP WORKSPACE ================= -->
@@ -2522,6 +2580,101 @@ function users(){const a=U(),m=document.createElement('div');m.className='cem';
 let done=false;const _sk=window.skipSplash;
 window.skipSplash=function(){if(done)return;done=true;_sk();if(sess()){sessionStorage.removeItem('ce_cloud_reloaded');who();return}showLogin()};
 if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTimeout(()=>window.skipSplash(),30)}
+})();
+</script>
+<style id="ceQuotationStyles">
+.ce-quote-launch{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:190px;padding:14px 28px;border-radius:999px;border:1px solid rgba(245,158,11,.75);background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#111827;font-weight:900;letter-spacing:.04em;box-shadow:0 8px 28px rgba(245,158,11,.18);cursor:pointer;transition:transform .18s,box-shadow .18s}.ce-quote-launch:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(245,158,11,.3)}
+.ce-quote-modal{position:fixed;inset:0;z-index:10050;background:rgba(2,6,23,.82);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px}.ce-quote-modal-card{width:min(100%,440px);background:#0f172a;color:#f8fafc;border:1px solid #475569;border-radius:22px;padding:25px;box-shadow:0 24px 90px #0009}.ce-quote-modal-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#f59e0b20;color:#fbbf24;font-size:26px;margin-bottom:12px}.ce-quote-modal-card h2{font-size:24px;font-weight:900;margin:0 0 5px}.ce-quote-modal-card p{color:#94a3b8;font-size:13px;margin:0 0 22px}.ce-quote-modal-card label{display:block;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:7px}.ce-quote-modal-card select{width:100%;background:#020617;color:#f8fafc;border:1px solid #475569;border-radius:11px;padding:13px;font-size:14px;outline:none}.ce-quote-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}.ce-q-btn{border:0;border-radius:10px;padding:10px 15px;font-size:13px;font-weight:800;cursor:pointer}.ce-q-primary{background:#f59e0b;color:#111827}.ce-q-cancel{background:#334155;color:#f1f5f9}.ce-q-add{background:#dcfce7;color:#166534}.ce-quotation-screen{position:fixed;inset:0;z-index:10040;overflow:auto;background:#eef2f7;color:#0f172a;padding:22px;font-family:Arial,sans-serif}.ce-quotation-topbar{max-width:1100px;margin:0 auto 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#0f172a}.ce-quotation-topbar h2{font-size:25px;font-weight:900;margin:3px 0}.ce-quotation-topbar p{font-size:13px;color:#64748b;margin:0}.ce-quotation-eyebrow{font-size:10px;font-weight:900;letter-spacing:.15em;color:#b45309}.ce-quotation-top-actions{display:flex;gap:8px;flex-wrap:wrap}.ce-quotation-paper{max-width:1100px;margin:0 auto;background:#fff;padding:34px;border-radius:16px;box-shadow:0 8px 32px #0f172a12;border:1px solid #e2e8f0}.ce-quotation-heading{display:flex;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:2px solid #0f172a}.ce-quotation-doc-label{font-size:10px;font-weight:900;letter-spacing:.2em;color:#b45309}.ce-quotation-heading h1{font-size:34px;font-weight:900;letter-spacing:.06em;margin:3px 0}.ce-quote-seller-name{font-size:13px;font-weight:800;color:#475569}.ce-quote-meta{display:grid;gap:9px;min-width:190px}.ce-quote-meta label,.ce-quote-customer-grid label,.ce-quote-notes{display:grid;gap:5px;font-size:11px;font-weight:800;color:#475569}.ce-quote-meta input,.ce-quote-customer-grid input,.ce-quote-customer-grid textarea,.ce-quote-notes textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:7px;padding:9px;background:#fff;color:#0f172a;font:14px Arial,sans-serif;outline-color:#f59e0b}.ce-quote-customer-box{margin:22px 0}.ce-quote-customer-box h3,.ce-quote-items-head h3{font-size:14px;font-weight:900;margin:0 0 12px}.ce-quote-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.ce-quote-address{grid-column:1/-1}.ce-quote-items-head{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}.ce-quote-table-wrap{overflow-x:auto}.ce-quote-table{width:100%;border-collapse:collapse;font-size:12px}.ce-quote-table th{background:#f1f5f9;text-align:left;padding:11px 8px;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;font-size:10px;text-transform:uppercase;letter-spacing:.04em}.ce-quote-table td{padding:7px 6px;border-bottom:1px solid #e2e8f0;vertical-align:middle}.ce-quote-table input{width:100%;min-width:60px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:6px;padding:8px;color:#0f172a;background:#fff;font:12px Arial,sans-serif}.ce-quote-table .ce-quote-desc{min-width:190px}.ce-quote-line-amount{text-align:right;font-weight:800;white-space:nowrap}.ce-quote-remove{border:0;background:#fee2e2;color:#991b1b;border-radius:7px;padding:7px 9px;cursor:pointer;font-weight:800}.ce-quote-bottom{display:grid;grid-template-columns:1fr minmax(220px,300px);gap:25px;margin-top:24px}.ce-quote-total-box{border:1px solid #cbd5e1;border-radius:10px;padding:15px;height:max-content}.ce-quote-total-box>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px}.ce-quote-grand{border-top:1px solid #cbd5e1;margin-top:7px;padding-top:13px!important;font-size:16px!important}.ce-quote-grand strong{font-size:19px}.ce-quote-signoff{display:flex;justify-content:space-between;align-items:end;margin-top:45px;padding-top:15px;border-top:1px dashed #cbd5e1;font-size:11px;color:#64748b}.ce-quote-signoff span:last-child{font-weight:800;color:#0f172a}.ce-quote-help{max-width:1100px;margin:12px auto;color:#64748b;font-size:12px}
+@media(max-width:650px){.ce-quotation-screen{padding:10px}.ce-quotation-paper{padding:17px;border-radius:10px}.ce-quotation-heading{display:grid}.ce-quote-meta{grid-template-columns:1fr 1fr}.ce-quote-customer-grid{grid-template-columns:1fr}.ce-quote-address{grid-column:auto}.ce-quote-bottom{grid-template-columns:1fr}.ce-quotation-topbar h2{font-size:21px}.ce-quote-table th,.ce-quote-table td{padding:6px 4px}.ce-quote-table input{padding:7px 5px}}
+</style>
+<script id="ceQuotationLogic">
+(function(){
+ const $=id=>document.getElementById(id);
+ const branchNames={shop1:'CITY ELECTRICALS',shop2:'CITY ELECTRICALS / SAMUDRA',shop3:'BALU TECH'};
+ let quoteRowCounter=0;
+ const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ window.ceOpenQuotationBranchPicker=function(){ $('ceQuoteBranchModal').style.display='flex'; };
+ window.ceCloseQuotationBranchPicker=function(){ $('ceQuoteBranchModal').style.display='none'; };
+ window.ceStartQuotation=function(){
+   const branch=$('ceQuoteBranchSelect').value;
+   if(!branchNames[branch]){alert('Please select a branch.');return;}
+   $('ceQuoteBranchModal').style.display='none';
+   $('ceQuoteBranchLabel').textContent=branchNames[branch]; $('ceQuotePaperBranch').textContent=branchNames[branch];
+   $('ceQuotationScreen').dataset.branch=branch;
+   const today=new Date(); const localDate=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+   $('ceQuoteDate').value=localDate;
+   const seq=String(Date.now()).slice(-6); $('ceQuoteNumber').value='QT-'+seq;
+   $('ceQuoteCustomerName').value='';$('ceQuoteCustomerPhone').value='';$('ceQuoteCustomerAddress').value='';$('ceQuoteNotes').value='';
+   $('ceQuoteItemsBody').innerHTML='';quoteRowCounter=0;window.ceQuoteAddRow();window.ceQuoteRecalculate();
+   $('ceQuotationScreen').style.display='block'; document.body.style.overflow='hidden';
+ };
+ window.ceCloseQuotationScreen=function(){ $('ceQuotationScreen').style.display='none';document.body.style.overflow=''; };
+ window.ceQuoteAddRow=function(){
+   quoteRowCounter++;const tr=document.createElement('tr');tr.dataset.row=String(quoteRowCounter);
+   tr.innerHTML='<td class="ce-quote-row-no"></td><td><input class="ce-quote-desc" type="text" placeholder="Item / service description" aria-label="Particulars"></td><td><input class="ce-quote-qty" type="number" min="0" step="0.01" value="1" aria-label="Quantity"></td><td><input class="ce-quote-rate" type="number" min="0" step="0.01" value="0" aria-label="Rate"></td><td class="ce-quote-line-amount">₹0.00</td><td class="ce-quote-action-col"><button type="button" class="ce-quote-remove" aria-label="Remove row">×</button></td>';
+   $('ceQuoteItemsBody').appendChild(tr);
+   tr.querySelectorAll('.ce-quote-qty,.ce-quote-rate').forEach(el=>el.addEventListener('input',window.ceQuoteRecalculate));
+   tr.querySelector('.ce-quote-remove').addEventListener('click',()=>{if($('ceQuoteItemsBody').rows.length===1){tr.querySelector('.ce-quote-desc').value='';tr.querySelector('.ce-quote-qty').value='1';tr.querySelector('.ce-quote-rate').value='0';}else tr.remove();window.ceQuoteRecalculate();});
+   tr.querySelector('.ce-quote-desc').focus();window.ceQuoteRecalculate();
+ };
+ window.ceQuoteRecalculate=function(){let total=0;[...$('ceQuoteItemsBody').rows].forEach((tr,i)=>{tr.querySelector('.ce-quote-row-no').textContent=i+1;const q=Math.max(0,Number(tr.querySelector('.ce-quote-qty').value)||0),r=Math.max(0,Number(tr.querySelector('.ce-quote-rate').value)||0),a=q*r;total+=a;tr.querySelector('.ce-quote-line-amount').textContent=money(a);});$('ceQuoteSubtotal').textContent=money(total);$('ceQuoteGrandTotal').textContent=money(total);};
+ window.cePrintQuotation=function(){
+   const name=$('ceQuoteCustomerName').value.trim();if(!name){alert('Please enter the customer name.');$('ceQuoteCustomerName').focus();return;}
+   const rows=[...$('ceQuoteItemsBody').rows].map((tr,i)=>({no:i+1,desc:tr.querySelector('.ce-quote-desc').value.trim(),qty:Math.max(0,Number(tr.querySelector('.ce-quote-qty').value)||0),rate:Math.max(0,Number(tr.querySelector('.ce-quote-rate').value)||0)})).filter(x=>x.desc);
+   if(!rows.length){alert('Please enter at least one item / particular.');return;}
+   const branch=branchNames[$('ceQuotationScreen').dataset.branch]||'CITY ELECTRICALS';const date=$('ceQuoteDate').value;const dateText=date?date.split('-').reverse().join('/'):'—';const total=rows.reduce((s,x)=>s+x.qty*x.rate,0);
+   const win=window.open('','_blank');if(!win){alert('Print window was blocked. Please allow pop-ups for this website and try again.');return;}
+   const body=rows.map(x=>`<tr><td>${x.no}</td><td>${esc(x.desc)}</td><td class="num">${x.qty}</td><td class="num">${money(x.rate)}</td><td class="num">${money(x.qty*x.rate)}</td></tr>`).join('');
+   const notes=$('ceQuoteNotes').value.trim();
+   win.document.open();win.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quotation ${esc($('ceQuoteNumber').value)}</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#111;margin:0;font-size:12px}.top{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #111;padding-bottom:16px}.tag{font-size:10px;letter-spacing:3px;font-weight:bold;color:#555}h1{font-size:30px;letter-spacing:2px;margin:5px 0}.branch{font-size:15px;font-weight:bold;margin-top:5px}.meta{text-align:right;line-height:1.8}.customer{border:1px solid #aaa;padding:12px;margin:20px 0}.customer h2{font-size:13px;margin:0 0 9px}.customer p{margin:5px 0;white-space:pre-wrap}.label{color:#555;font-weight:bold;display:inline-block;min-width:90px}table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#eee;text-transform:uppercase;font-size:10px}th,td{border:1px solid #aaa;padding:9px 7px;text-align:left}td.num,th.num{text-align:right;white-space:nowrap}.total{width:300px;max-width:100%;margin:18px 0 0 auto;border:1px solid #aaa;padding:12px;display:flex;justify-content:space-between;font-weight:bold;font-size:15px}.notes{margin-top:22px;white-space:pre-wrap}.sign{display:flex;justify-content:space-between;margin-top:70px;border-top:1px dashed #aaa;padding-top:12px}.foot{margin-top:25px;text-align:center;color:#555;font-size:10px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+.ce-quote-history{max-width:1100px;margin:20px auto;background:#fff;border:1px solid #dbe3ee;border-radius:14px;padding:20px;color:#0f172a}.ce-quote-history h3{font-size:18px;font-weight:900;margin:0 0 14px}.ce-quote-search-row{display:flex;gap:8px;flex-wrap:wrap}.ce-quote-search-row input,.ce-quote-search-row select{flex:1;min-width:180px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#fff;color:#0f172a}.ce-quote-history-table-wrap{overflow-x:auto}.ce-quote-history .ce-quote-table{min-width:650px}.ce-quote-view{border:0;border-radius:7px;padding:7px 10px;background:#dbeafe;color:#1d4ed8;font-weight:800;cursor:pointer}.ce-quote-history .ce-quote-help{margin:10px 0}.ce-quote-history td{font-size:12px}
+</style></head><body><div class="top"><div><div class="tag">PRICE OFFER</div><h1>QUOTATION</h1><div class="branch">${esc(branch)}</div></div><div class="meta"><b>Quotation No:</b> ${esc($('ceQuoteNumber').value||'—')}<br><b>Date:</b> ${esc(dateText)}</div></div><div class="customer"><h2>CUSTOMER DETAILS</h2><p><span class="label">Name:</span> ${esc(name)}</p><p><span class="label">Phone:</span> ${esc($('ceQuoteCustomerPhone').value.trim()||'—')}</p><p><span class="label">Address:</span> ${esc($('ceQuoteCustomerAddress').value.trim()||'—')}</p></div><table><thead><tr><th style="width:45px">S.No.</th><th>Particulars / Description</th><th class="num">Quantity</th><th class="num">Rate (₹)</th><th class="num">Amount (₹)</th></tr></thead><tbody>${body}</tbody></table><div class="total"><span>Total Amount</span><span>${money(total)}</span></div>${notes?`<div class="notes"><b>Notes / Terms:</b><br>${esc(notes)}</div>`:''}<div class="sign"><span>Thank you for your enquiry.</span><span>Authorised Signature</span></div><div class="foot">This quotation is an offer of prices and is not a tax invoice.</div><script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>`);
+   win.document.close();
+ };
+ $('ceQuoteBranchModal').addEventListener('click',e=>{if(e.target===$('ceQuoteBranchModal'))window.ceCloseQuotationBranchPicker();});
+})();
+</script>
+<script>
+/* Quotation-only Firebase storage and search. Existing billing/inventory logic is untouched. */
+(function(){
+ const $=id=>document.getElementById(id);
+ const branchNames={shop1:'CITY ELECTRICALS',shop2:'CITY ELECTRICALS / SAMUDRA',shop3:'BALU TECH'};
+ let loadedQuotes=[]; let currentQuoteDocId=null;
+ const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function getDb(){try{if(window.firebase&&firebase.apps.length)return firebase.firestore()}catch(e){}return null}
+ function getAuth(){try{if(window.firebase&&firebase.apps.length)return firebase.auth()}catch(e){}return null}
+ function quoteData(){
+  const rows=[...$('ceQuoteItemsBody').rows].map((tr,i)=>({sno:i+1,particulars:tr.querySelector('.ce-quote-desc').value.trim(),quantity:Math.max(0,Number(tr.querySelector('.ce-quote-qty').value)||0),rate:Math.max(0,Number(tr.querySelector('.ce-quote-rate').value)||0)})).filter(x=>x.particulars).map(x=>({...x,amount:x.quantity*x.rate}));
+  return {branchId:$('ceQuotationScreen').dataset.branch||'shop1',branchName:branchNames[$('ceQuotationScreen').dataset.branch]||'CITY ELECTRICALS',quotationNumber:$('ceQuoteNumber').value.trim(),date:$('ceQuoteDate').value||'',customerName:$('ceQuoteCustomerName').value.trim(),customerNameLower:$('ceQuoteCustomerName').value.trim().toLowerCase(),customerPhone:$('ceQuoteCustomerPhone').value.trim(),customerAddress:$('ceQuoteCustomerAddress').value.trim(),items:rows,notes:$('ceQuoteNotes').value.trim(),total:rows.reduce((a,x)=>a+x.amount,0),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+ }
+ function status(t){const e=$('ceQuoteHistoryStatus');if(e)e.textContent=t}
+ window.ceSaveQuotation=async function(){
+  const db=getDb(),auth=getAuth();if(!db||!auth||!auth.currentUser){alert('Quotation save செய்ய முதலில் Firebase account-ல் Login செய்யுங்கள்.');return}
+  const d=quoteData();if(!d.customerName){alert('Customer Name உள்ளிடவும்.');$('ceQuoteCustomerName').focus();return}if(!d.items.length){alert('குறைந்தது ஒரு Particulars item உள்ளிடவும்.');return}
+  const btn=document.querySelector('button[onclick="ceSaveQuotation()"]');if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  try{
+   if(currentQuoteDocId){d.quotationNumber=$('ceQuoteNumber').value.trim();await db.collection('quotations').doc(currentQuoteDocId).set({...d,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});alert('Quotation Firebase-ல் update செய்யப்பட்டது: '+d.quotationNumber);}
+   else {
+    const counterRef=db.collection('quotationCounters').doc('global');const quoteRef=db.collection('quotations').doc();
+    await db.runTransaction(async tx=>{const snap=await tx.get(counterRef);const next=(snap.exists?Number(snap.data().lastNumber)||0:0)+1;const qn='QT-'+String(next).padStart(6,'0');d.quotationNumber=qn;tx.set(counterRef,{lastNumber:next,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});tx.set(quoteRef,{...d,createdAt:firebase.firestore.FieldValue.serverTimestamp()});});
+    currentQuoteDocId=quoteRef.id;$('ceQuoteNumber').value=d.quotationNumber;alert('Quotation Firebase-ல் சேமிக்கப்பட்டது: '+d.quotationNumber);
+   }
+   await window.ceLoadQuotations();
+  }catch(e){console.error('Quotation save failed',e);alert('Quotation Save ஆகவில்லை. Firestore Rules-ல் quotations மற்றும் quotationCounters collection-க்கு signed-in access அனுமதி உள்ளதா பார்க்கவும். விவரம்: '+(e.code||e.message||'Unknown error'));}
+  finally{if(btn){btn.disabled=false;btn.textContent='☁ Save Quotation'}}
+ };
+ window.ceLoadQuotations=async function(){const db=getDb(),auth=getAuth();if(!db||!auth||!auth.currentUser){status('Quotation list பார்க்க Firebase-ல் Login செய்ய வேண்டும்.');return}status('Firebase-லிருந்து quotations ஏற்றப்படுகிறது…');try{const snap=await db.collection('quotations').get();loadedQuotes=snap.docs.map(doc=>({docId:doc.id,...doc.data()}));loadedQuotes.sort((a,b)=>String(b.quotationNumber||'').localeCompare(String(a.quotationNumber||''),undefined,{numeric:true}));render(loadedQuotes);status(loadedQuotes.length+' quotation(s) Firebase-ல் கிடைத்தது.')}catch(e){console.error(e);status('Load ஆகவில்லை. Firestore Rules-ல் quotations collection-க்கு read access தேவை. ('+(e.code||e.message)+')')}};
+ function render(list){const body=$('ceQuoteHistoryBody');if(!body)return;if(!list.length){body.innerHTML='<tr><td colspan="6">Matching quotations இல்லை.</td></tr>';return}body.innerHTML=list.map(q=>'<tr><td><b>'+esc(q.quotationNumber||'—')+'</b></td><td>'+esc(q.date||'—')+'</td><td>'+esc(q.customerName||'—')+'</td><td>'+esc(q.branchName||branchNames[q.branchId]||'—')+'</td><td>'+money(q.total)+'</td><td><button type="button" class="ce-quote-view" data-quote-id="'+esc(q.docId)+'">View</button></td></tr>').join('');body.querySelectorAll('[data-quote-id]').forEach(b=>b.addEventListener('click',()=>loadIntoForm(b.dataset.quoteId)));}
+ window.ceSearchQuotations=async function(){if(!loadedQuotes.length)await window.ceLoadQuotations();const term=$('ceQuoteSearchText').value.trim().toLowerCase(),branch=$('ceQuoteSearchBranch').value;render(loadedQuotes.filter(q=>(!term||String(q.customerName||'').toLowerCase().includes(term)||String(q.quotationNumber||'').toLowerCase().includes(term))&&(!branch||q.branchId===branch)));};
+ async function loadIntoForm(id){const q=loadedQuotes.find(x=>x.docId===id);if(!q)return;currentQuoteDocId=id;$('ceQuoteBranchSelect').value=q.branchId||'shop1';$('ceQuotationScreen').dataset.branch=q.branchId||'shop1';$('ceQuoteBranchLabel').textContent=q.branchName||branchNames[q.branchId]||'';$('ceQuotePaperBranch').textContent=q.branchName||branchNames[q.branchId]||'';$('ceQuoteNumber').value=q.quotationNumber||'';$('ceQuoteDate').value=q.date||'';$('ceQuoteCustomerName').value=q.customerName||'';$('ceQuoteCustomerPhone').value=q.customerPhone||'';$('ceQuoteCustomerAddress').value=q.customerAddress||'';$('ceQuoteNotes').value=q.notes||'';$('ceQuoteItemsBody').innerHTML='';(q.items||[]).forEach(it=>{window.ceQuoteAddRow();const tr=$('ceQuoteItemsBody').lastElementChild;tr.querySelector('.ce-quote-desc').value=it.particulars||'';tr.querySelector('.ce-quote-qty').value=it.quantity??1;tr.querySelector('.ce-quote-rate').value=it.rate??0});if(!$('ceQuoteItemsBody').rows.length)window.ceQuoteAddRow();window.ceQuoteRecalculate();$('ceQuotationScreen').style.display='block';document.body.style.overflow='hidden';status('Opened '+(q.quotationNumber||'quotation')+' for viewing/editing. Save Quotation to update.');}
+ const oldStart=window.ceStartQuotation;window.ceStartQuotation=function(){currentQuoteDocId=null;if(oldStart)oldStart();setTimeout(()=>window.ceLoadQuotations(),500);};
+ const oldClose=window.ceCloseQuotationScreen;window.ceCloseQuotationScreen=function(){if(oldClose)oldClose();currentQuoteDocId=null;};
+ const oldPrint=window.cePrintQuotation;window.cePrintQuotation=function(){if(!currentQuoteDocId){alert('முதலில் ☁ Save Quotation அழுத்தி Firebase-ல் சேமிக்கவும்; அதன் பிறகு Print செய்யுங்கள்.');return}if(oldPrint)oldPrint();};
+ const search=$('ceQuoteSearchText');if(search)search.addEventListener('keydown',e=>{if(e.key==='Enter')window.ceSearchQuotations()});
+ const branchSelect=$('ceQuoteSearchBranch');if(branchSelect)branchSelect.addEventListener('change',()=>window.ceSearchQuotations());
+ document.addEventListener('DOMContentLoaded',()=>{});
 })();
 </script>
 </body>
