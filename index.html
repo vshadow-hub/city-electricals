@@ -552,17 +552,17 @@ Enter Password ➔
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-<div class="lg:col-span-4">
+<div class="lg:col-span-3">
 <label class="block text-[11px] text-slate-400 mb-1">Select Product</label>
 <select id="itemSelect" tabindex="6" onchange="onProductSelectChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:border-amber-400 focus:outline-none">
 <option value="">-- Choose Item --</option>
 </select>
 </div>
-<div class="lg:col-span-2">
+<div class="lg:col-span-1">
 <label class="block text-[11px] text-slate-400 mb-1">HSN Code</label>
 <input type="text" id="itemHsn" tabindex="7" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono text-slate-300">
 </div>
-<div class="lg:col-span-2">
+<div class="lg:col-span-1">
 <label class="block text-[11px] text-slate-400 mb-1">UOM</label>
 <select id="itemUom" tabindex="8" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-white">
 <option value="NOS">NOS</option>
@@ -574,15 +574,19 @@ Enter Password ➔
 <option value="PKT">PKT</option>
 </select>
 </div>
-<div class="lg:col-span-2">
-<label class="block text-[11px] text-amber-300 font-semibold mb-1">Live Rate (₹)</label>
-<input type="number" id="itemRate" tabindex="9" step="0.01" class="w-full bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-2 text-xs font-mono text-amber-300 font-bold focus:outline-none">
-</div>
 <div class="lg:col-span-1">
 <label class="block text-[11px] text-slate-400 mb-1">Qty</label>
-<input type="number" id="itemQty" tabindex="10" value="1" min="1" onkeydown="handleQtyKeyDown(event)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-center font-bold text-white">
+<input type="number" id="itemQty" tabindex="9" value="1" min="1" onkeydown="handleQtyKeyDown(event)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-center font-bold text-white">
 </div>
-<div class="lg:col-span-1">
+<div class="lg:col-span-2" id="itemTaxWrap">
+<label class="block text-[11px] text-amber-300 font-semibold mb-1">GST Tax Code</label>
+<select id="itemTaxCode" tabindex="10" class="w-full bg-slate-950 border border-amber-500/60 rounded-lg px-2 py-2 text-xs text-white"><option value="">Select Tax</option><option value="-18">-18% (Reverse GST)</option><option value="18">+18%</option><option value="5">5%</option><option value="0">0%</option><option value="none">No Tax</option></select>
+</div>
+<div class="lg:col-span-2">
+<label class="block text-[11px] text-amber-300 font-semibold mb-1">Live Rate (₹)</label>
+<input type="number" id="itemRate" tabindex="11" step="0.01" class="w-full bg-slate-950 border border-amber-500/60 rounded-lg px-2.5 py-2 text-xs font-mono text-amber-300 font-bold focus:outline-none">
+</div>
+<div class="lg:col-span-2">
 <button type="button" onclick="addItemToCurrentBill()" id="addItemBtn" tabindex="11" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold py-2 rounded-lg text-xs transition">
 Add
 </button>
@@ -599,8 +603,8 @@ Add
 <th class="p-2.5">UOM</th>
 <th class="p-2.5 text-center">Qty</th>
 <th class="p-2.5 text-right">Rate (₹)</th>
-<th class="p-2.5 text-right gst-col">CGST 9%</th>
-<th class="p-2.5 text-right gst-col">SGST 9%</th>
+<th class="p-2.5 text-right gst-col">CGST</th>
+<th class="p-2.5 text-right gst-col">SGST</th>
 <th class="p-2.5 text-right">Amount (₹)</th>
 <th class="p-2.5 text-center">Action</th>
 </tr>
@@ -1920,21 +1924,21 @@ function bill(inv,a5){
  if(inv.shopId==='shop1')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><span class="bx">TAX INVOICE</span></td><td style="width:34%"></td></tr></table>
 <div class="ttl red">CITY ELECTRICALS</div><div class="c" style="font-size:12px;margin-bottom:6px">1/655, Chithambalam Pirivu,<br>Palladam - 641 664. Tirupur District</div>
 <table class="g"><tr><td style="width:50%">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b></td><td>Transport Mode :</td></tr><tr><td>Invoice Date : <b>${d}</b></td><td>Vehicle Number :</td></tr><tr><td>State : TAMILNADU &nbsp; &nbsp; Code : 33</td><td>Place of Supply :</td></tr>
-<tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="height:78px;vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name :<br>Address :<br>GSTIN / UIN :<br>State : &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Code :</td></tr></table>
+<tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="height:78px;vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td></tr></table>
 <div class="itw"><table class="g it"><tr class="hd"><td style="width:6%">S.No.</td><td>PRODUCT DESCRIPTION</td><td style="width:11%">HSN / ACS</td><td style="width:12%">QTY.</td><td style="width:12%">RATE</td><td style="width:15%">AMOUNT</td></tr>
 ${rows(inv,13,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
 ${rem(inv)}<table class="g"><tr><td rowspan="4" style="width:56%;vertical-align:top;line-height:1.6">Rupees : <b>${w}</b><br><br><b>Bank Details :</b><br>Ac Name : CITY ELECTRICALS<br>Bank &amp; Branch : BANK OF BARODA, PALLADAM.<br>A/c No. : 49140200000190<br>IFSC Code : BARB0PALLAD</td><td><b>Total Amount Before Tax</b></td><td class="r">${t}</td></tr>
-<tr><td><b>Add : CGST 9 %</b></td><td class="r">${f2(inv.cgst)}</td></tr><tr><td><b>Add : SGST 9 %</b></td><td class="r">${f2(inv.sgst)}</td></tr><tr><td><b>Grand Total</b></td><td class="r"><b style="font-size:14px">${f2(inv.grand)}</b></td></tr>
+${(inv.items||[]).reduce((a,x)=>{const r=Number(x.gstRate)||0;if(!r)return a;const k=String(r);a[k]=a[k]||{c:0,s:0};a[k].c+=Number(x.cgst)||0;a[k].s+=Number(x.sgst)||0;return a;},{})&&Object.entries((inv.items||[]).reduce((a,x)=>{const r=Number(x.gstRate)||0;if(!r)return a;const k=String(r);a[k]=a[k]||{c:0,s:0};a[k].c+=Number(x.cgst)||0;a[k].s+=Number(x.sgst)||0;return a;},{})).map(([r,v])=>`<tr><td><b>Add : CGST ${Number(r)/2}%</b></td><td class="r">${f2(v.c)}</td></tr><tr><td><b>Add : SGST ${Number(r)/2}%</b></td><td class="r">${f2(v.s)}</td></tr>`).join('')}<tr><td><b>Round Off</b></td><td class="r">${f2(inv.roundOff||0)}</td></tr><tr><td><b>Grand Total</b></td><td class="r"><b style="font-size:14px">${f2(inv.grand)}</b></td></tr>
 </table>${sign(inv,'<span class="red">CITY ELECTRICALS</span>',1)}</div>`;
  if(inv.shopId==='shop2')return `<div class="nb"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>GSTIN : 33BMVPM8500K1ZL<br>Cell : 85240 85015, 98424 21958</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">TAX INVOICE</b></td><td style="width:34%"></td></tr></table>
 <table class="nobd"><tr><td class="c"><span style="display:inline-block;vertical-align:middle"><svg viewBox="0 0 200 64" width="190"><path d="M8 4h34v10H18v6h24v26H8V36h24v-6H8z" fill="#2b2a9a"/><text x="52" y="46" font-family="Arial Black,Arial" font-weight="900" font-size="26" fill="#2b2a9a" font-style="italic">SAMUDRA</text></svg></span><span style="display:inline-block;vertical-align:middle;margin-left:30px"><svg viewBox="0 0 100 70" width="100"><circle cx="50" cy="30" r="26" fill="none" stroke="#2b2a9a" stroke-width="3" stroke-dasharray="5 3"/><text x="50" y="42" text-anchor="middle" font-family="Arial Black" font-size="34" fill="#2b2a9a">2</text><text x="50" y="58" text-anchor="middle" font-family="Arial" font-weight="900" font-size="9" fill="#2b2a9a">YEARS</text><text x="50" y="68" text-anchor="middle" font-family="Arial" font-weight="900" font-size="10" fill="#2b2a9a">WARRANTY</text></svg></span></td></tr></table>
 <div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">CITY ELECTRICALS</div><div style="font-weight:bold;padding-bottom:4px">99A, Chettipalayam Road, Palladam, Tirupur, Tamil Nadu - 641 664.</div></div>
-<table class="g"><tr><td style="width:62%;line-height:1.9;vertical-align:top">To M/s. : <b style="font-size:13px">${esc(inv.customerName)}</b><br>${esc(inv.customerAddress)}<br>Mobile No. : <b>${esc(inv.customerPhone||'')}</b> &nbsp; State Code : 33<br>GSTIN : <b>${esc(g)}</b></td><td style="line-height:2;vertical-align:top">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b><br>Date : <b>${d}</b></td></tr></table>
-<div class="itw"><table class="g it"><tr class="bh"><td style="width:6%">S.No.</td><td>Description of Goods</td><td style="width:10%">HSN Code</td><td style="width:7%">Tax</td><td style="width:11%">Qty</td><td style="width:12%">Rate</td><td style="width:14%">Amount Rs.</td></tr>
-${rows(inv,8,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">18%</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
+<table class="g"><tr><td style="width:50%">Invoice No. : <b style="font-size:14px">${esc(inv.invoiceNo)}</b></td><td>Invoice Date : <b>${d}</b></td></tr><tr><td class="hd">Bill to Party</td><td class="hd">Ship to Party</td></tr><tr><td style="vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td><td style="vertical-align:top;line-height:1.6">Name : <b>${esc(inv.customerName)}</b><br>Address : ${esc(inv.customerAddress)}<br>Phone No. : <b>${esc(inv.customerPhone||'')}</b><br>GSTIN / UIN : <b>${esc(g)}</b><br>State : TAMILNADU &nbsp; Code : 33</td></tr></table>
+<div class="itw"><table class="g it"><tr class="bh"><td style="width:6%">S.No.</td><td>Description of Goods</td><td style="width:10%">HSN Code</td><td style="width:11%">Qty</td><td style="width:12%">Rate</td><td style="width:14%">Amount Rs.</td></tr>
+${rows(inv,8,(x,i)=>x?`<tr><td class="c">${i+1}</td><td><b>${esc(x.name)}</b></td><td class="c">${esc(x.hsn)}</td><td class="c">${x.qty} ${esc(x.uom)}</td><td class="r">${f2(x.rate)}</td><td class="r">${f2(x.taxable)}</td></tr>`:'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>')}</table></div>
 <table class="g c"><tr class="bh"><td rowspan="2">Rate</td><td rowspan="2">Taxable Value</td><td colspan="2">CGST</td><td colspan="2">SGST</td><td>TOTAL</td></tr><tr class="bh"><td>Tax</td><td>Tax Value</td><td>Tax</td><td>Tax Value</td><td>Tax Value</td></tr>
-${[[12,6],[18,9],[28,14]].map(([a,b])=>a==18?`<tr><td>18%</td><td>${t}</td><td>9%</td><td>${f2(inv.cgst)}</td><td>9%</td><td>${f2(inv.sgst)}</td><td>${f2(inv.cgst+inv.sgst)}</td></tr>`:`<tr><td>${a}%</td><td></td><td>${b}%</td><td></td><td>${b}%</td><td></td><td></td></tr>`).join('')}
-<tr><td colspan="6" class="r"><b>GRAND TOTAL</b></td><td><b style="font-size:14px">${f2(inv.grand)}</b></td></tr></table>
+${Object.entries((inv.items||[]).reduce((a,x)=>{const r=Number(x.gstRate)||0;if(!r)return a;const k=String(r);a[k]=a[k]||{t:0,c:0,s:0};a[k].t+=Number(x.taxable)||0;a[k].c+=Number(x.cgst)||0;a[k].s+=Number(x.sgst)||0;return a;},{})).map(([r,v])=>`<tr><td>${r}%</td><td>${f2(v.t)}</td><td>${Number(r)/2}%</td><td>${f2(v.c)}</td><td>${Number(r)/2}%</td><td>${f2(v.s)}</td><td>${f2(v.c+v.s)}</td></tr>`).join('')}
+<tr><td colspan="6" class="r"><b>ROUND OFF</b></td><td>${f2(inv.roundOff||0)}</td></tr><tr><td colspan="6" class="r"><b>GRAND TOTAL</b></td><td><b style="font-size:14px">${f2(inv.grand)}</b></td></tr></table>
 ${rem(inv)}<table class="g"><tr><td style="width:62%;line-height:1.6;vertical-align:top">Rupees in words : <b>${w}</b><br><br><b>Terms &amp; Conditions :</b><br>Goods once sold will not be taken back.<br>Interest @24% will be charged payments made including 60 days<br>Subject to Palladam Jurisdictions.</td></tr></table>${sign(inv,'CITY ELECTRICALS')}</div>`;
  return `<div class="nb bt${a5?' a5c':''}"><table class="nobd"><tr><td style="width:34%;vertical-align:top;font-size:10px;line-height:1.5"><b>Contact : 98424 21958, 85240 85015</b></td><td class="c" style="vertical-align:top"><b style="font-size:15px">CASH MEMO / BILL</b></td><td style="width:34%"></td></tr></table>
 <div class="band"><div class="ttl" style="font-size:40px;padding-top:2px">BALU TECH</div><div style="font-weight:bold;padding-bottom:4px">1/655, Chithambalam Pirivu, Palladam - 641 664. Tirupur District</div></div>
@@ -2675,6 +2679,72 @@ if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTi
  const search=$('ceQuoteSearchText');if(search)search.addEventListener('keydown',e=>{if(e.key==='Enter')window.ceSearchQuotations()});
  const branchSelect=$('ceQuoteSearchBranch');if(branchSelect)branchSelect.addEventListener('change',()=>window.ceSearchQuotations());
  document.addEventListener('DOMContentLoaded',()=>{});
+})();
+</script>
+
+<script>
+/* ===== City Electricals POS GST selector + reverse GST + round-off (shop1/shop2 only) ===== */
+(function(){
+ const $=id=>document.getElementById(id);
+ const money2=n=>Math.round((Number(n)||0)*100)/100;
+ const gstFor=(rate,qty,code)=>{
+   const gross=money2(rate*qty); let taxable=gross,cgst=0,sgst=0,percent=0,mode=String(code);
+   if(mode==='-18'){percent=18;taxable=money2(gross/1.18);cgst=money2(taxable*.09);sgst=money2(taxable*.09);}
+   else if(mode==='18'){percent=18;taxable=gross;cgst=money2(taxable*.09);sgst=money2(taxable*.09);}
+   else if(mode==='5'){percent=5;taxable=gross;cgst=money2(taxable*.025);sgst=money2(taxable*.025);}
+   else {percent=0;taxable=gross;}
+   const total=mode==='-18'?gross:money2(taxable+cgst+sgst);
+   return {taxable,cgst,sgst,total,gstRate:percent,taxCode:mode,roundGross:gross};
+ };
+ const applies=()=>typeof activeShop!=='undefined'&&['shop1','shop2'].includes(activeShop.id)&&activeShop.isGst;
+ const oldLaunch=window.launchShop;
+ window.launchShop=function(k){oldLaunch(k);const w=$('itemTaxWrap');if(w)w.style.display=(k==='shop1'||k==='shop2')?'':'none';};
+ const oldAdd=window.addItemToCurrentBill;
+ window.addItemToCurrentBill=function(){
+   if(!applies())return oldAdd();
+   const code=$('itemTaxCode')?.value;
+   if(code==null||code===''){alert('ஒவ்வொரு Item-க்கும் GST Tax Code தேர்வு செய்யவும்.');$('itemTaxCode')?.focus();return;}
+   const id=parseInt($('itemSelect').value),qty=parseFloat($('itemQty').value),rate=parseFloat($('itemRate').value),prod=inventory.find(x=>x.id===id);
+   if(!prod||!(qty>0)||!(rate>=0)){return oldAdd();}
+   const x=gstFor(rate,qty,code);
+   currentBillItems.push({id:prod.id,name:prod.name,hsn:$('itemHsn').value||prod.hsn,uom:$('itemUom').value,qty,rate,taxable:x.taxable,cgst:x.cgst,sgst:x.sgst,total:x.total,gstRate:x.gstRate,taxCode:x.taxCode,roundGross:x.roundGross});
+   renderBillItemsTable();calculateTotals();$('itemSelect').value='';$('itemHsn').value='';$('itemRate').value='';$('itemQty').value='1';$('itemTaxCode').value='';$('itemSelect').focus();
+ };
+ const oldCalc=window.calculateTotals;
+ window.calculateTotals=function(){
+   if(!applies())return oldCalc();
+   let taxable=0,cgst=0,sgst=0,raw=0;
+   currentBillItems.forEach(i=>{taxable+=Number(i.taxable)||0;cgst+=Number(i.cgst)||0;sgst+=Number(i.sgst)||0;raw+=Number(i.total)||0;});
+   taxable=money2(taxable);cgst=money2(cgst);sgst=money2(sgst);raw=money2(raw);
+   const rounded=Math.round(raw),roundOff=money2(rounded-raw);
+   $('totTaxableTxt').textContent=taxable.toFixed(2);$('totCgstTxt').textContent=cgst.toFixed(2);$('totSgstTxt').textContent=sgst.toFixed(2);$('totGrandTxt').textContent=rounded.toFixed(2);
+   let ro=$('totRoundOffTxt');if(!ro){const box=$('totGrandTxt')?.closest('.bg-slate-950');if(box){const d=document.createElement('div');d.className='text-[11px] text-slate-400 mt-1';d.innerHTML='Round Off: ₹<span id="totRoundOffTxt">0.00</span>';box.appendChild(d);ro=$('totRoundOffTxt')}}if(ro)ro.textContent=(roundOff>=0?'+':'')+roundOff.toFixed(2);
+ };
+ const oldRender=window.renderBillItemsTable;
+ window.renderBillItemsTable=function(){
+   if(!applies())return oldRender();
+   const tb=$('billItemsTableBody');if(!tb)return;tb.innerHTML='';
+   if(!currentBillItems.length){tb.innerHTML='<tr><td colspan="9" class="p-6 text-center text-slate-500">No items added yet.</td></tr>';return;}
+   currentBillItems.forEach((i,n)=>{tb.insertAdjacentHTML('beforeend',`<tr class="hover:bg-slate-800/40"><td class="p-2.5 font-bold">${i.name}</td><td class="p-2.5 font-mono text-slate-400">${i.hsn||''}</td><td class="p-2.5">${i.uom||''}</td><td class="p-2.5 text-center font-bold">${i.qty}</td><td class="p-2.5 text-right font-mono">₹${Number(i.rate).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.cgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.sgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono font-bold">₹${Number(i.total).toFixed(2)}</td><td class="p-2.5 text-center"><button type="button" onclick="removeItem(${n})" class="text-rose-400 font-bold">✕</button></td></tr>`)});
+ };
+ // Persist accurate tax/round-off values in invoice object after the existing save routine.
+ const oldSave=window.executeSaveAndPrint;
+ window.executeSaveAndPrint=function(){
+   if(!applies())return oldSave();
+   if(!currentBillItems.length){alert('Please add at least one item before printing!');return;}
+   if(currentBillItems.some(i=>!i.taxCode)){alert('பழைய அல்லது புதிய ஒவ்வொரு Item-க்கும் GST Tax Code தேர்வு செய்யவும்.');return;}
+   const raw=currentBillItems.reduce((a,i)=>a+(Number(i.total)||0),0),roundOff=money2(Math.round(raw)-money2(raw));
+   oldSave();
+   const inv=savedInvoices&&savedInvoices[0];
+   if(inv&&inv.shopId===activeShop.id){inv.roundOff=roundOff;inv.items=(inv.items||[]).map(i=>{if(!i.taxCode)return i;const x=gstFor(i.rate,i.qty,i.taxCode);return {...i,...x}});localStorage.setItem('ce_all_bills',JSON.stringify(savedInvoices));}
+ };
+ // Add item-level tax percentages in grouped invoice summary; no tax code column in item rows.
+ window.ceGstSummaryHTML=function(inv){
+   const groups={};(inv.items||[]).forEach(i=>{const r=Number(i.gstRate)||0;if(!r)return;const k=String(r);if(!groups[k])groups[k]={taxable:0,cgst:0,sgst:0};groups[k].taxable+=Number(i.taxable)||0;groups[k].cgst+=Number(i.cgst)||0;groups[k].sgst+=Number(i.sgst)||0;});
+   return Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).map(k=>{const g=groups[k],half=Number(k)/2;return `<tr><td>${k}%</td><td>${money2(g.taxable).toFixed(2)}</td><td>${half}%</td><td>${money2(g.cgst).toFixed(2)}</td><td>${half}%</td><td>${money2(g.sgst).toFixed(2)}</td><td>${money2(g.cgst+g.sgst).toFixed(2)}</td></tr>`}).join('');
+ };
+ // Replace hard-coded tax labels and show round-off on the two GST invoice layouts.
+ const billFn=window.bill;
 })();
 </script>
 </body>
