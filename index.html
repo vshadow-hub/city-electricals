@@ -350,6 +350,36 @@ body::before,body::after{animation:none!important}
 #splashScreen .anim-thunder,#splashScreen .glow-gold{animation:none!important;filter:none!important}
 @media(max-width:650px){.lg{transform:scale(.88);transform-origin:center}.ce-quote-launch{left:50%;bottom:16px}}
 </style>
+
+<style id="CE_QUOTATION_IN_BRANCH_FLOW">
+/* Keep the quotation action in normal document flow below the branch cards.
+   Do not pin it to the mobile viewport bottom. */
+#shopSelectScreen > .w-full.flex.justify-center.mt-7.mb-2 {
+  position:relative !important;
+  inset:auto !important;
+  width:100% !important;
+  margin:24px auto 12px !important;
+  padding:0 12px 8px !important;
+  z-index:1 !important;
+}
+#shopSelectScreen .ce-quote-launch {
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  z-index:1 !important;
+  display:inline-flex !important;
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 auto !important;
+}
+@media(max-width:650px) {
+  #shopSelectScreen > .w-full.flex.justify-center.mt-7.mb-2 { margin-top:16px !important; }
+  #shopSelectScreen .ce-quote-launch { min-width:190px !important; padding:12px 24px !important; }
+}
+</style>
 </head>
 <body class="text-slate-100 font-sans min-h-screen electric-grid selection:bg-amber-500 selection:text-black"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="ceG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a2)"/><stop offset="1" style="stop-color:var(--a)"/></linearGradient>
