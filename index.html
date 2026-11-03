@@ -308,7 +308,9 @@ header{top:22px!important}
 .lg input::placeholder{color:#cbd5e1}
 .lg input:focus{border-color:#fb923c!important;box-shadow:0 0 12px rgba(251,146,60,.55)}
 #lUser{top:178px}#lPass{top:228px}#lPass2{top:290px;display:none}
-#lShowWrap{position:absolute;left:358px;top:275px;width:300px;display:flex;align-items:center;gap:8px;color:#fff;font:600 13px Segoe UI,Arial,sans-serif;cursor:pointer}
+#lShowWrap{position:absolute;left:358px;top:274px;width:300px;min-height:22px;display:flex;align-items:center;gap:8px;color:#fff!important;font:600 13px Segoe UI,Arial,sans-serif;cursor:pointer;z-index:5}
+#lShowWrap span{display:inline-block;color:#fff!important;opacity:1!important}
+#lShowPass{appearance:auto!important;flex:0 0 17px}
 #lShowPass{position:static!important;width:17px!important;height:17px!important;margin:0;accent-color:#f59e0b;cursor:pointer}
 #lForgot{top:302px}#lBtn{top:340px}
 #lMsg{position:absolute;left:358px;width:300px;top:146px;font-size:11px;line-height:1.3}
@@ -341,6 +343,12 @@ header{top:22px!important}
 *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 body::before,body::after,.anim-thunder,.glow-gold,.electric-grid,.ce-quote-launch,.group{animation:none!important;transition:none!important}
 .ce-quote-launch:hover{transform:none!important;box-shadow:0 8px 28px rgba(245,158,11,.18)!important}
+</style>
+<style id="CE_FINAL_STATIC_PERF">
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+body::before,body::after{animation:none!important}
+#splashScreen .anim-thunder,#splashScreen .glow-gold{animation:none!important;filter:none!important}
+@media(max-width:650px){.lg{transform:scale(.88);transform-origin:center}.ce-quote-launch{left:50%;bottom:16px}}
 </style>
 </head>
 <body class="text-slate-100 font-sans min-h-screen electric-grid selection:bg-amber-500 selection:text-black"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1987,7 +1995,7 @@ const printHTML=(h,inv)=>{
   if(hgt<=700){html=a;cls='a4-page-frame active-layout a5 fit';pg='@page{size:A5 portrait;margin:6mm}'}
  }
  setPage(pg);
- $('printableInvoiceWrapper').innerHTML='<div class="'+cls+'">'+html+'</div>';window.print()};
+ $('printableInvoiceWrapper').innerHTML='<div class="'+cls+'">'+html+'</div>';window.focus();setTimeout(()=>window.print(),180)};
 const view=inv=>{const m=modal(`<div class="vbar"><button data-a="p">🖨 Print</button><button data-a="x">✕ Close (Esc)</button></div><div class="paper">${bill(inv)}</div>`,'full');m.onclick=e=>{const a=e.target.dataset.a;if(a==='p')printHTML(bill(inv),inv);if(a==='x')m.remove()}};
 
 /* ---------- SAVE -> EDIT / VIEW / PRINT ---------- */
@@ -2088,7 +2096,7 @@ function data(){
   L.forEach(v=>{const its=(v.items||[]).filter(x=>!I||x.name.toLowerCase().includes(I));if(!its.length)its.push(null);its.forEach((x,k)=>{if(x)tot+=x.total;else tot+=v.grand;body.push([dmy(v.date),v.invoiceNo,v.customerName,v.customerAddress,v.customerGstin,x?x.name:'(items not recorded)',x?x.hsn:'',x?x.qty:'',x?x.uom:'',x?f2(x.rate):'',gst?'18%':'-',f2(x?x.total:v.grand)]);own.push(k?null:v)})});
   foot=['','TOTAL','','','','','','','','','',f2(tot)]}
  return{head,body,foot,own,L}}
-function tbl(d,edit){return `<table class="rt"><tr>${d.head.map(h=>`<th>${h}</th>`).join('')}${edit?'<th>Actions</th>':''}</tr>${d.body.map((r,i)=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?`<td style="white-space:nowrap">${d.own[i]?`<button class="ib" data-e="${i}" title="Edit bill">✏</button> <button class="ib" data-d="${i}" title="Delete bill">🗑</button> <button class="ib" data-p="${i}" title="Print bill">🖨</button>`:''}</td>`:''}</tr>`).join('')||`<tr><td colspan="${d.head.length}">No records</td></tr>`}${d.foot?`<tr class="ft">${d.foot.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?'<td></td>':''}</tr>`:''}</table>`}
+function tbl(d,edit){return `<table class="rt"><tr>${d.head.map(h=>`<th>${h}</th>`).join('')}${edit?'<th>Actions</th>':''}</tr>${d.body.map((r,i)=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?`<td style="white-space:nowrap">${d.own[i]?`<button class="ib" data-e="${i}" title="Edit bill">✏</button> <button class="ib" data-d="${i}" title="Delete bill">🗑</button> <button class="ib" data-p="${i}" title="Print bill">🖨</button> <button class="ib" data-pd="${i}" title="Download this bill as PDF">⬇ PDF</button>`:''}</td>`:''}</tr>`).join('')||`<tr><td colspan="${d.head.length}">No records</td></tr>`}${d.foot?`<tr class="ft">${d.foot.map(c=>`<td>${esc(c)}</td>`).join('')}${edit?'<td></td>':''}</tr>`:''}</table>`}
 window.renderSalesReports=function(){cur=data();$('rOut').innerHTML=tbl(cur,true);$('rN').textContent=cur.L.length+' bills'};
 $('tabReports').addEventListener('input',renderSalesReports);
 $('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
@@ -2096,12 +2104,36 @@ $('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');
  else if(b.dataset.e!==undefined)editInv(cur.own[+b.dataset.e]);
  else if(b.dataset.d!==undefined){const v=cur.own[+b.dataset.d];if(!confirm(`Delete invoice ${v.invoiceNo}? Stock will be restored.`))return;(v.items||[]).forEach(i=>{const p=inventory.find(x=>x.id===i.id);if(p&&!i.wip)p.outward-=i.qty});window.ceDeleteRecord&&window.ceDeleteRecord('ce_all_bills',v);savedInvoices.splice(savedInvoices.indexOf(v),1);persist();renderSalesReports();renderStockTable();refreshDash();toast('Invoice deleted')}
  else if(b.dataset.p!==undefined){const v=cur.own[+b.dataset.p];if(v.items)printHTML(bill(v),v);else alert('This old bill has no item details, so a copy cannot be printed.')}
+ else if(b.dataset.pd!==undefined){const v=cur.own[+b.dataset.pd];downloadOneBillPDF(v)}
  else if(b.id==='rClr'){['rF','rT','rM','rC','rI'].forEach(k=>$(k).value='');renderSalesReports()}
  else if(b.id==='rV'){const m=modal(`<div class="vbar"><b>${title()}</b><span><button id="vp">🖨 Print / Save PDF</button> <button onclick="this.closest('.cem').remove()">✕ Close (Esc)</button></span></div><div class="paper wide">${tbl(cur,false)}</div>`,'full');m.querySelector('#vp').onclick=()=>printHTML(`<div class="nb"><h3 style="text-align:center">${title()}</h3>${tbl(cur,false)}</div>`)}
  else if(b.id==='rP')pdf();else if(b.id==='rX')xls()});
 const title=()=>`${activeShop.title||'City Electricals'} - ${mode==='aud'?'Auditor Sales Report':'Daily Sales Details'} ${$('rM').value||(($('rF').value?dmy($('rF').value):'')+' '+($('rT').value?'to '+dmy($('rT').value):''))}`;
 const dl=(blob,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()};
 function xls(){const d=cur,h='<html><meta charset="utf-8"><body><table border="1"><tr>'+d.head.map(x=>`<th>${x}</th>`).join('')+'</tr>'+d.body.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+(d.foot?'<tr>'+d.foot.map(c=>`<td><b>${esc(c)}</b></td>`).join('')+'</tr>':'')+'</table></body></html>';dl(new Blob([h],{type:'application/vnd.ms-excel'}),'Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.xls');toast('Excel downloaded')}
+function downloadOneBillPDF(inv){
+ if(!inv){alert('Bill record not found.');return}
+ const J=window.jspdf;
+ if(!J||!J.jsPDF){alert('PDF library load ஆகவில்லை. Internet connection சரிபார்த்து மீண்டும் முயற்சிக்கவும்.');return}
+ const doc=new J.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+ const branch=inv.shopId==='shop1'?'CITY ELECTRICALS':inv.shopId==='shop2'?'CITY ELECTRICALS / SAMUDRA BRANCH 1':'BALU TECH';
+ doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(branch,105,16,{align:'center'});
+ doc.setFontSize(12);doc.text('INVOICE COPY',105,23,{align:'center'});
+ doc.setFont('helvetica','normal');doc.setFontSize(9);
+ doc.text('Invoice No: '+String(inv.invoiceNo||''),14,34);doc.text('Date: '+String(inv.date||''),145,34);
+ doc.text('Customer: '+String(inv.customerName||''),14,41);
+ const addr=String(inv.customerAddress||'');doc.text(doc.splitTextToSize('Address: '+addr,180),14,47);
+ let y=47+Math.max(1,doc.splitTextToSize('Address: '+addr,180).length)*4.5;
+ doc.text('Phone: '+String(inv.customerPhone||''),14,y);doc.text('GSTIN: '+String(inv.customerGstin||'-'),110,y);
+ const rows=(inv.items||[]).map((x,i)=>[i+1,String(x.name||''),String(x.hsn||''),String(x.qty??''),String(x.uom||''),Number(x.rate||0).toFixed(2),Number(x.total??x.amount??0).toFixed(2)]);
+ doc.autoTable({startY:y+5,head:[['S.No','Particulars','HSN','Qty','UOM','Rate (Rs.)','Amount (Rs.)']],body:rows.length?rows:[['','','','','','','']],styles:{fontSize:8,cellPadding:2,textColor:20,lineColor:80,lineWidth:.15},headStyles:{fillColor:[235,235,235],textColor:20},columnStyles:{0:{cellWidth:12},2:{cellWidth:18},3:{cellWidth:15},4:{cellWidth:15},5:{cellWidth:25},6:{cellWidth:27}}});
+ let sy=doc.lastAutoTable.finalY+8; if(sy>260){doc.addPage();sy=18}
+ const money=n=>'Rs. '+Number(n||0).toFixed(2);
+ doc.setFontSize(9);doc.text('Taxable Value: '+money(inv.taxable),196,sy,{align:'right'});sy+=5;
+ doc.text('CGST: '+money(inv.cgst),196,sy,{align:'right'});sy+=5;doc.text('SGST: '+money(inv.sgst),196,sy,{align:'right'});sy+=5;
+ doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('GRAND TOTAL: '+money(inv.grand),196,sy+2,{align:'right'});
+ const safe=String(inv.invoiceNo||'Bill').replace(/[^a-z0-9_-]/gi,'_');doc.save('Invoice_'+safe+'.pdf');
+}
 function pdf(){const J=window.jspdf;if(!J||!J.jsPDF){alert('PDF library not loaded (internet needed). Use View > Print > Save as PDF.');return}const doc=new J.jsPDF({orientation:'landscape'});doc.setFontSize(12);doc.text(title(),14,12);doc.autoTable({head:[cur.head],body:cur.body.concat(cur.foot?[cur.foot]:[]),startY:18,styles:{fontSize:7,textColor:0,lineColor:0,lineWidth:.1},headStyles:{fillColor:[0,0,0],textColor:255}});doc.save('Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.pdf');toast('PDF downloaded')}
 /* v12 */
 window.stkDelItem=function(id){const p=inventory.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete item "${p.name}"?`+(p.outward>0?`\nIt has sales history (${p.outward} sold).`:'')))return;led.filter(l=>l.pid===id).forEach(l=>window.ceDeleteRecord&&window.ceDeleteRecord('ce_stock_ledger',l));window.ceDeleteRecord&&window.ceDeleteRecord('ce_inventory_v4',p);inventory=inventory.filter(x=>x.id!==id);led=led.filter(l=>l.pid!==id);persist();renderStockTable();populateDropdown();renderMasterTables();mrefresh();toast('Item deleted')};
@@ -2471,11 +2503,14 @@ window.ceCloudLoadAndReload=async function(username){
   const keys=Object.keys(CE_DATA_MAP);
   try{await ceFlushDeletes()}catch(e){console.error('Pending deletes not sent yet',e)}
   const tomb=await ceReadTombstones();
+  // Read independent Firestore collections concurrently to shorten sign-in wait.
+  const cloudValues=await Promise.all(keys.map(key=>ceReadCollection(key)));
+  const cloudByKey=Object.fromEntries(keys.map((key,i)=>[key,cloudValues[i]]));
   try{
     ceCloudApplying=true;
     for(const key of keys){
       const map=CE_DATA_MAP[key];
-      const cloud=await ceReadCollection(key);
+      const cloud=cloudByKey[key];
       const local=localStorage.getItem(key);
       let localValue=null; try{localValue=local?JSON.parse(local):null}catch(e){}
       if(map.single){
@@ -2503,13 +2538,13 @@ window.ceCloudLoadAndReload=async function(username){
     ceCloudLoadDone=true;
   } finally {ceCloudApplying=false;}
   // Push only the records that exist locally but not in the cloud yet.
-  for(const key of keys){const raw=localStorage.getItem(key);if(raw)await ceWriteCollection(key,raw)}
+  await Promise.all(keys.map(key=>{const raw=localStorage.getItem(key);return raw?ceWriteCollection(key,raw):Promise.resolve()}));
   // The app's arrays are initialized during page load, so reload after cloud data has been applied.
   localStorage.setItem('ce_cloud_sync_user',username||'');
   localStorage.setItem(SK,JSON.stringify({u:username,role:'admin',day:today()}));
   if(!sessionStorage.getItem('ce_cloud_reloaded')){
     sessionStorage.setItem('ce_cloud_reloaded','1'); location.reload();
-    await new Promise(resolve=>setTimeout(resolve,1200));
+    return;
   }
 };
 async function fb(path,body){let r,j;try{r=await fetch('https://identitytoolkit.googleapis.com/v1/'+path+'?key='+FIREBASE_API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json()}catch(e){throw new Error('NO_INTERNET')}if(!r.ok)throw new Error((j.error&&j.error.message)||'FIREBASE_ERROR');return j}
@@ -2618,7 +2653,10 @@ if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTi
 })();
 </script>
 <style id="ceQuotationStyles">
-.ce-quote-launch{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:190px;padding:14px 28px;border-radius:999px;border:1px solid rgba(245,158,11,.75);background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#111827;font-weight:900;letter-spacing:.04em;box-shadow:0 8px 28px rgba(245,158,11,.18);cursor:pointer;transition:transform .18s,box-shadow .18s}.ce-quote-launch:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(245,158,11,.3)}
+.ce-quote-launch{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:190px;padding:14px 28px;border-radius:999px;border:1px solid rgba(245,158,11,.75);background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#111827;font-weight:900;letter-spacing:.04em;box-shadow:0 8px 28px rgba(245,158,11,.18);cursor:pointer;transition:transform .18s,box-shadow .18s}.ce-quote-launch:hover{transform:translateX(-50%);box-shadow:0 12px 34px rgba(245,158,11,.3)}
+html,body{scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(max-width:650px){.ce-quote-launch{bottom:18px;min-width:170px;padding:12px 22px}}
 .ce-quote-modal{position:fixed;inset:0;z-index:10050;background:rgba(2,6,23,.92);backdrop-filter:none;display:flex;align-items:center;justify-content:center;padding:18px}.ce-quote-modal-card{width:min(100%,440px);background:#0f172a;color:#f8fafc;border:1px solid #475569;border-radius:22px;padding:25px;box-shadow:0 24px 90px #0009}.ce-quote-modal-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#f59e0b20;color:#fbbf24;font-size:26px;margin-bottom:12px}.ce-quote-modal-card h2{font-size:24px;font-weight:900;margin:0 0 5px}.ce-quote-modal-card p{color:#94a3b8;font-size:13px;margin:0 0 22px}.ce-quote-modal-card label{display:block;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:7px}.ce-quote-modal-card select{width:100%;background:#020617;color:#f8fafc;border:1px solid #475569;border-radius:11px;padding:13px;font-size:14px;outline:none}.ce-quote-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}.ce-q-btn{border:0;border-radius:10px;padding:10px 15px;font-size:13px;font-weight:800;cursor:pointer}.ce-q-primary{background:#f59e0b;color:#111827}.ce-q-cancel{background:#334155;color:#f1f5f9}.ce-q-add{background:#dcfce7;color:#166534}.ce-quotation-screen{position:fixed;inset:0;z-index:10040;overflow:auto;background:#eef2f7;color:#0f172a;padding:22px;font-family:Arial,sans-serif}.ce-quotation-topbar{max-width:1100px;margin:0 auto 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#0f172a}.ce-quotation-topbar h2{font-size:25px;font-weight:900;margin:3px 0}.ce-quotation-topbar p{font-size:13px;color:#64748b;margin:0}.ce-quotation-eyebrow{font-size:10px;font-weight:900;letter-spacing:.15em;color:#b45309}.ce-quotation-top-actions{display:flex;gap:8px;flex-wrap:wrap}.ce-quotation-paper{max-width:1100px;margin:0 auto;background:#fff;padding:34px;border-radius:16px;box-shadow:0 8px 32px #0f172a12;border:1px solid #e2e8f0}.ce-quotation-heading{display:flex;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:2px solid #0f172a}.ce-quotation-doc-label{font-size:10px;font-weight:900;letter-spacing:.2em;color:#b45309}.ce-quotation-heading h1{font-size:34px;font-weight:900;letter-spacing:.06em;margin:3px 0}.ce-quote-seller-name{font-size:13px;font-weight:800;color:#475569}.ce-quote-meta{display:grid;gap:9px;min-width:190px}.ce-quote-meta label,.ce-quote-customer-grid label,.ce-quote-notes{display:grid;gap:5px;font-size:11px;font-weight:800;color:#475569}.ce-quote-meta input,.ce-quote-customer-grid input,.ce-quote-customer-grid textarea,.ce-quote-notes textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:7px;padding:9px;background:#fff;color:#0f172a;font:14px Arial,sans-serif;outline-color:#f59e0b}.ce-quote-customer-box{margin:22px 0}.ce-quote-customer-box h3,.ce-quote-items-head h3{font-size:14px;font-weight:900;margin:0 0 12px}.ce-quote-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.ce-quote-address{grid-column:1/-1}.ce-quote-items-head{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}.ce-quote-table-wrap{overflow-x:auto}.ce-quote-table{width:100%;border-collapse:collapse;font-size:12px}.ce-quote-table th{background:#f1f5f9;text-align:left;padding:11px 8px;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;font-size:10px;text-transform:uppercase;letter-spacing:.04em}.ce-quote-table td{padding:7px 6px;border-bottom:1px solid #e2e8f0;vertical-align:middle}.ce-quote-table input{width:100%;min-width:60px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:6px;padding:8px;color:#0f172a;background:#fff;font:12px Arial,sans-serif}.ce-quote-table .ce-quote-desc{min-width:190px}.ce-quote-line-amount{text-align:right;font-weight:800;white-space:nowrap}.ce-quote-remove{border:0;background:#fee2e2;color:#991b1b;border-radius:7px;padding:7px 9px;cursor:pointer;font-weight:800}.ce-quote-bottom{display:grid;grid-template-columns:1fr minmax(220px,300px);gap:25px;margin-top:24px}.ce-quote-total-box{border:1px solid #cbd5e1;border-radius:10px;padding:15px;height:max-content}.ce-quote-total-box>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px}.ce-quote-grand{border-top:1px solid #cbd5e1;margin-top:7px;padding-top:13px!important;font-size:16px!important}.ce-quote-grand strong{font-size:19px}.ce-quote-signoff{display:flex;justify-content:space-between;align-items:end;margin-top:45px;padding-top:15px;border-top:1px dashed #cbd5e1;font-size:11px;color:#64748b}.ce-quote-signoff span:last-child{font-weight:800;color:#0f172a}.ce-quote-help{max-width:1100px;margin:12px auto;color:#64748b;font-size:12px}
 @media(max-width:650px){.lg{transform:scale(.92);transform-origin:center}.lg input{left:52%;width:44%}#lMsg{left:52%;width:44%}#lShowWrap{left:52%;width:44%}#lBtn{left:52%;width:44%}#lForgot{right:4%}#lNew{left:52%;width:44%}.ce-quotation-screen{padding:10px}.ce-quotation-paper{padding:17px;border-radius:10px}.ce-quotation-heading{display:grid}.ce-quote-meta{grid-template-columns:1fr 1fr}.ce-quote-customer-grid{grid-template-columns:1fr}.ce-quote-address{grid-column:auto}.ce-quote-bottom{grid-template-columns:1fr}.ce-quotation-topbar h2{font-size:21px}.ce-quote-table th,.ce-quote-table td{padding:6px 4px}.ce-quote-table input{padding:7px 5px}}
 </style>
@@ -2664,7 +2702,13 @@ if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTi
    const notes=$('ceQuoteNotes').value.trim();
    win.document.open();win.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quotation ${esc($('ceQuoteNumber').value)}</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#111;margin:0;font-size:12px}.top{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #111;padding-bottom:16px}.tag{font-size:10px;letter-spacing:3px;font-weight:bold;color:#555}h1{font-size:30px;letter-spacing:2px;margin:5px 0}.branch{font-size:15px;font-weight:bold;margin-top:5px}.meta{text-align:right;line-height:1.8}.customer{border:1px solid #aaa;padding:12px;margin:20px 0}.customer h2{font-size:13px;margin:0 0 9px}.customer p{margin:5px 0;white-space:pre-wrap}.label{color:#555;font-weight:bold;display:inline-block;min-width:90px}table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#eee;text-transform:uppercase;font-size:10px}th,td{border:1px solid #aaa;padding:9px 7px;text-align:left}td.num,th.num{text-align:right;white-space:nowrap}.total{width:300px;max-width:100%;margin:18px 0 0 auto;border:1px solid #aaa;padding:12px;display:flex;justify-content:space-between;font-weight:bold;font-size:15px}.notes{margin-top:22px;white-space:pre-wrap}.sign{display:flex;justify-content:space-between;margin-top:70px;border-top:1px dashed #aaa;padding-top:12px}.foot{margin-top:25px;text-align:center;color:#555;font-size:10px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 .ce-quote-history{max-width:1100px;margin:20px auto;background:#fff;border:1px solid #dbe3ee;border-radius:14px;padding:20px;color:#0f172a}.ce-quote-history h3{font-size:18px;font-weight:900;margin:0 0 14px}.ce-quote-search-row{display:flex;gap:8px;flex-wrap:wrap}.ce-quote-search-row input,.ce-quote-search-row select{flex:1;min-width:180px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;background:#fff;color:#0f172a}.ce-quote-history-table-wrap{overflow-x:auto}.ce-quote-history .ce-quote-table{min-width:650px}.ce-quote-view{border:0;border-radius:7px;padding:7px 10px;background:#dbeafe;color:#1d4ed8;font-weight:800;cursor:pointer}.ce-quote-history .ce-quote-help{margin:10px 0}.ce-quote-history td{font-size:12px}
-</style></head><body><div class="top"><div><div class="tag">PRICE OFFER</div><h1>QUOTATION</h1><div class="branch">${esc(branch)}</div></div><div class="meta"><b>Quotation No:</b> ${esc($('ceQuoteNumber').value||'—')}<br><b>Date:</b> ${esc(dateText)}</div></div><div class="customer"><h2>CUSTOMER DETAILS</h2><p><span class="label">Name:</span> ${esc(name)}</p><p><span class="label">Phone:</span> ${esc($('ceQuoteCustomerPhone').value.trim()||'—')}</p><p><span class="label">Address:</span> ${esc($('ceQuoteCustomerAddress').value.trim()||'—')}</p></div><table><thead><tr><th style="width:45px">S.No.</th><th>Particulars / Description</th><th class="num">Quantity</th><th class="num">Rate (₹)</th><th class="num">Amount (₹)</th></tr></thead><tbody>${body}</tbody></table><div class="total"><span>Total Amount</span><span>${money(total)}</span></div>${notes?`<div class="notes"><b>Notes / Terms:</b><br>${esc(notes)}</div>`:''}<div class="sign"><span>Thank you for your enquiry.</span><span>Authorised Signature</span></div><div class="foot">This quotation is an offer of prices and is not a tax invoice.</div><script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>`);
+</style><style id="CE_FINAL_STATIC_PERF">
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+body::before,body::after{animation:none!important}
+#splashScreen .anim-thunder,#splashScreen .glow-gold{animation:none!important;filter:none!important}
+@media(max-width:650px){.lg{transform:scale(.88);transform-origin:center}.ce-quote-launch{left:50%;bottom:16px}}
+</style>
+</head><body><div class="top"><div><div class="tag">PRICE OFFER</div><h1>QUOTATION</h1><div class="branch">${esc(branch)}</div></div><div class="meta"><b>Quotation No:</b> ${esc($('ceQuoteNumber').value||'—')}<br><b>Date:</b> ${esc(dateText)}</div></div><div class="customer"><h2>CUSTOMER DETAILS</h2><p><span class="label">Name:</span> ${esc(name)}</p><p><span class="label">Phone:</span> ${esc($('ceQuoteCustomerPhone').value.trim()||'—')}</p><p><span class="label">Address:</span> ${esc($('ceQuoteCustomerAddress').value.trim()||'—')}</p></div><table><thead><tr><th style="width:45px">S.No.</th><th>Particulars / Description</th><th class="num">Quantity</th><th class="num">Rate (₹)</th><th class="num">Amount (₹)</th></tr></thead><tbody>${body}</tbody></table><div class="total"><span>Total Amount</span><span>${money(total)}</span></div>${notes?`<div class="notes"><b>Notes / Terms:</b><br>${esc(notes)}</div>`:''}<div class="sign"><span>Thank you for your enquiry.</span><span>Authorised Signature</span></div><div class="foot">This quotation is an offer of prices and is not a tax invoice.</div><script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>`);
    win.document.close();
  };
  $('ceQuoteBranchModal').addEventListener('click',e=>{if(e.target===$('ceQuoteBranchModal'))window.ceCloseQuotationBranchPicker();});
