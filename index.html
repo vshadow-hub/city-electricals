@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="ce-build-version" content="2026-11-03-login-static-v1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
  <!-- PWA Manifest Link -->
 <link rel="manifest" href="manifest.json">
 <!-- === PASTE FIREBASE SDK SCRIPTS HERE === -->
@@ -328,6 +332,12 @@ header{top:22px!important}
 .a5c .it td{height:17px!important;padding:2px 5px!important}
 .a5c .g td{padding:2px 5px}
 .a5c [style*="height:74px"]{height:50px!important}
+</style>
+<style>
+/* CITY ELECTRICALS SAFE STATIC UI PATCH: stop decorative motion only */
+*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+body::before, body::after { animation: none !important; }
+.anim-thunder, .glow-gold, .electric-grid { animation: none !important; }
 </style>
 </head>
 <body class="text-slate-100 font-sans min-h-screen electric-grid selection:bg-amber-500 selection:text-black"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -2492,8 +2502,10 @@ document.body.insertAdjacentHTML('beforeend',`<div id="loginScreen"><div class="
 <polygon points="175,146 231,178 231,242 175,274 119,242 119,178" fill="#05141b" stroke="url(#lgT)" stroke-width="4" filter="url(#lgG)"/><polygon points="175,158 221,184 221,236 175,262 129,236 129,184" fill="none" stroke="#2dd4bf" stroke-width="1" opacity=".45"/>
 <path d="M205 188H172Q148 188 148 210Q148 232 172 232H205" fill="none" stroke="url(#lgO)" stroke-width="9" stroke-linecap="round" filter="url(#lgG)"/><path d="M196 202H174Q165 202 165 210Q165 218 174 218H196" fill="none" stroke="url(#lgT)" stroke-width="5" stroke-linecap="round"/><path d="M186 210H196L202 196L210 224L216 210H224" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#lgG)"/></svg>
 <div class="ver">Version 23.06</div><div class="ttl">CITY ELECTRICALS</div><div class="sub">Billing &amp; Stock Software</div><div class="pnl"></div>
-<div id="lMsg"></div><input id="lUser" placeholder="Username" autocomplete="off"><input id="lPass" type="password" placeholder="Password">
+<div id="lMsg"></div><input id="lUser" placeholder="Username" autocomplete="off"><input id="lPass" type="password" placeholder="Password" autocomplete="current-password">
+<label for="lShowPass" style="display:flex;align-items:center;gap:7px;margin:7px 0 10px;color:#cbd5e1;font-size:12px;cursor:pointer"><input id="lShowPass" type="checkbox" style="width:15px;height:15px;accent-color:#d97706"> Show Password</label>
 <a id="lForgot">Forgot Password?</a><button id="lBtn">Log In</button><a id="lNew">New User? Setup Admin</a><div class="lic">This product is licensed to : CITY ELECTRICALS</div></div></div>`);
+document.getElementById('lShowPass')?.addEventListener('change',function(){const p=document.getElementById('lPass');if(p)p.type=this.checked?'text':'password'});
 const sess=()=>{try{const x=JSON.parse(localStorage.getItem(SK)||'null');return x&&x.day===today()?x:null}catch(e){return null}};
 const msg=(t,bad)=>{$('lMsg').textContent=t;$('lMsg').style.color=bad?'#fda4af':'#cbd5e1'};
 function who(){const u=sess();$('topStrip').firstElementChild.textContent='V Shadow - City Electricals'+(u?'   |   👤 '+u.u:'');const r=$('topStrip').lastElementChild;
@@ -2708,7 +2720,16 @@ if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTi
    if(!prod||!(qty>0)||!(rate>=0)){return oldAdd();}
    const x=gstFor(rate,qty,code);
    currentBillItems.push({id:prod.id,name:prod.name,hsn:$('itemHsn').value||prod.hsn,uom:$('itemUom').value,qty,rate,taxable:x.taxable,cgst:x.cgst,sgst:x.sgst,total:x.total,gstRate:x.gstRate,taxCode:x.taxCode,roundGross:x.roundGross});
-   renderBillItemsTable();calculateTotals();$('itemSelect').value='';$('itemHsn').value='';$('itemRate').value='';$('itemQty').value='1';$('itemTaxCode').value='';$('itemSelect').focus();
+   renderBillItemsTable();calculateTotals();$('itemSelect').value='';if($('itemSearch'))$('itemSearch').value='';$('itemHsn').value='';$('itemRate').value='';$('itemQty').value='1';$('itemTaxCode').value='';$('itemSelect').focus();
+ };
+ // Edit an item already added to the current GST bill without deleting/re-entering it.
+ window.ceEditGstBillItem=function(index){
+   if(!applies())return;const item=currentBillItems[index];if(!item)return;
+   const q=prompt('Quantity:',String(item.qty));if(q===null)return;const qty=Number(q);if(!(qty>0)){alert('Quantity must be greater than zero.');return;}
+   const r=prompt('Rate (₹):',String(item.rate));if(r===null)return;const rate=Number(r);if(!(rate>=0)){alert('Enter a valid rate.');return;}
+   const options='-18 = Reverse GST 18%\n18 = GST 18%\n5 = GST 5%\n0 = GST 0%\nnone = No Tax';
+   const c=prompt('GST Tax Code (type one value):\n'+options,String(item.taxCode||'18'));if(c===null)return;const code=c.trim().toLowerCase();if(!['-18','18','5','0','none'].includes(code)){alert('Invalid GST Tax Code.');return;}
+   const x=gstFor(rate,qty,code);Object.assign(item,{qty,rate,taxable:x.taxable,cgst:x.cgst,sgst:x.sgst,total:x.total,gstRate:x.gstRate,taxCode:x.taxCode,roundGross:x.roundGross});renderBillItemsTable();calculateTotals();
  };
  const oldCalc=window.calculateTotals;
  window.calculateTotals=function(){
@@ -2725,7 +2746,7 @@ if(sessionStorage.getItem('ce_skip')){sessionStorage.removeItem('ce_skip');setTi
    if(!applies())return oldRender();
    const tb=$('billItemsTableBody');if(!tb)return;tb.innerHTML='';
    if(!currentBillItems.length){tb.innerHTML='<tr><td colspan="9" class="p-6 text-center text-slate-500">No items added yet.</td></tr>';return;}
-   currentBillItems.forEach((i,n)=>{tb.insertAdjacentHTML('beforeend',`<tr class="hover:bg-slate-800/40"><td class="p-2.5 font-bold">${i.name}</td><td class="p-2.5 font-mono text-slate-400">${i.hsn||''}</td><td class="p-2.5">${i.uom||''}</td><td class="p-2.5 text-center font-bold">${i.qty}</td><td class="p-2.5 text-right font-mono">₹${Number(i.rate).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.cgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.sgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono font-bold">₹${Number(i.total).toFixed(2)}</td><td class="p-2.5 text-center"><button type="button" onclick="removeItem(${n})" class="text-rose-400 font-bold">✕</button></td></tr>`)});
+   currentBillItems.forEach((i,n)=>{tb.insertAdjacentHTML('beforeend',`<tr class="hover:bg-slate-800/40"><td class="p-2.5 font-bold">${i.name}</td><td class="p-2.5 font-mono text-slate-400">${i.hsn||''}</td><td class="p-2.5">${i.uom||''}</td><td class="p-2.5 text-center font-bold">${i.qty}</td><td class="p-2.5 text-right font-mono">₹${Number(i.rate).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.cgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono text-amber-300 gst-col">₹${Number(i.sgst).toFixed(2)}</td><td class="p-2.5 text-right font-mono font-bold">₹${Number(i.total).toFixed(2)}</td><td class="p-2.5 text-center whitespace-nowrap"><button type="button" onclick="ceEditGstBillItem(${n})" title="Edit item" class="text-amber-300 font-bold mr-2">✏</button><button type="button" onclick="removeItem(${n})" title="Delete item" class="text-rose-400 font-bold">✕</button></td></tr>`)});
  };
  // Persist accurate tax/round-off values in invoice object after the existing save routine.
  const oldSave=window.executeSaveAndPrint;
