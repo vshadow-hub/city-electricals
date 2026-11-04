@@ -17,7 +17,7 @@
 <script>/* Preserve existing local data; no automatic destructive reset. */</script>
 
 <meta charset="UTF-8">
-<meta name="ce-release-version" content="2026.11.04.1">
+<meta name="ce-release-version" content="2026.11.04.2">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -326,6 +326,12 @@ header{top:22px!important}
 @media print{#loginScreen{display:none!important}}
 #topStrip button.lo{width:auto;height:18px;border-radius:9px;padding:0 10px;font:700 11px/16px Arial,sans-serif;background:#dc2626;border-color:#dc2626;color:#fff}
 #topStrip button.lo:hover{background:#fff;color:#dc2626}
+
+/* CE final stability patch: disable decorative motion without changing layout */
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+body::before,body::after{animation:none!important;content:none!important}
+.electric-grid{background-image:none!important;background-color:#070a12!important}
+.anim-thunder,.glow-gold{animation:none!important;filter:none!important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -1723,7 +1729,7 @@ window.refreshDash=function(){
  const td=mine.filter(i=>i.date===t),mo=mine.filter(i=>(i.date||'').startsWith(t.slice(0,7)));
  const low=inventory.filter(p=>p.inward-p.outward<=LOW).length;
  const card=(l,v,s,c)=>`<div class="dash-card"><div class="text-[11px] text-slate-400 uppercase tracking-wider">${l}</div><div class="text-lg font-black font-mono ${c}">${v}</div><div class="text-[11px] text-slate-500">${s}</div></div>`;
- $('dashStrip').innerHTML=card("Today's Sales",inr(sum(td)),td.length+' bills','text-emerald-400')+card('This Month',inr(sum(mo)),mo.length+' bills','text-amber-300')+card('Total Bills',mine.length,'this branch','text-blue-300')+card('Low / Out of Stock',low,'items ≤ '+LOW,low?'text-rose-400':'text-emerald-400');
+ $('dashStrip').innerHTML=card('Overall Sales',inr(sum(mine)), 'all-time · this branch','text-violet-300')+card("Today's Sales",inr(sum(td)),td.length+' bills','text-emerald-400')+card('This Month',inr(sum(mo)),mo.length+' bills','text-amber-300')+card('Total Bills',mine.length,'this branch','text-blue-300')+card('Low / Out of Stock',low,'items ≤ '+LOW,low?'text-rose-400':'text-emerald-400');
  const names=[...new Set(mine.map(i=>i.customerName).filter(n=>n&&n!=='Cash Customer'))];
  $('custList').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
 };
@@ -1968,6 +1974,7 @@ window.returnToShopSelect=function(){R();mode(false)};
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 /* ===== v10: pro bill copies, Edit/View/Print flow, autocomplete, stock register, reports ===== */
 (function(){
@@ -1979,6 +1986,18 @@ let CUST=null;try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'null')}
 window.addEventListener('ceCloudDataLoaded',()=>{
   try{led=JSON.parse(localStorage.getItem('ce_stock_ledger')||'[]')}catch(e){led=[]}
   try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'[]')}catch(e){CUST=[]}
+});
+window.addEventListener('ceCloudRealtimeDataChanged',e=>{
+  const k=e.detail&&e.detail.key;
+  if(k==='ce_stock_ledger'){try{led=JSON.parse(localStorage.getItem('ce_stock_ledger')||'[]')}catch(_){led=[]}}
+  if(k==='ce_customers'){try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'[]')}catch(_){CUST=[]}try{custRep()}catch(_){}}
+  if(k==='ce_all_bills'||k==='ce_inventory_v4'||k==='ce_stock_ledger'||k==='ce_customers'||k==='ce_suppliers'){
+    try{if(typeof renderSalesReports==='function')renderSalesReports()}catch(_){}
+    try{if(typeof refreshDash==='function')refreshDash()}catch(_){}
+    try{if(typeof renderStockTable==='function')renderStockTable()}catch(_){}
+    try{if(typeof renderMasterTables==='function')renderMasterTables()}catch(_){}
+    try{if(typeof mrefresh==='function')mrefresh()}catch(_){}
+  }
 });
 if(!Array.isArray(CUST)||(!CUST.length&&savedInvoices.length)){CUST=[];savedInvoices.slice().reverse().forEach(v=>{const n=(v.customerName||'').trim();if(!n||n==='Cash Customer')return;const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase()),g=v.customerGstin&&v.customerGstin!=='-'?v.customerGstin:'';if(c){c.addr=v.customerAddress||c.addr;if(g)c.gstin=g}else CUST.push({id:Date.now()+Math.random(),name:n,addr:v.customerAddress||'',gstin:g})});localStorage.setItem('ce_customers',JSON.stringify(CUST))}
 const persist=()=>{localStorage.setItem('ce_all_bills',JSON.stringify(savedInvoices));localStorage.setItem('ce_inventory_v4',JSON.stringify(inventory));localStorage.setItem('ce_stock_ledger',JSON.stringify(led));localStorage.setItem('ce_counters',JSON.stringify({shop1:SHOPS.shop1.counter,shop2:SHOPS.shop2.counter,shop3:SHOPS.shop3.counter}))};
@@ -2145,28 +2164,35 @@ $('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');
 const title=()=>`${activeShop.title||'City Electricals'} - ${mode==='aud'?'Auditor Sales Report':'Daily Sales Details'} ${$('rM').value||(($('rF').value?dmy($('rF').value):'')+' '+($('rT').value?'to '+dmy($('rT').value):''))}`;
 const dl=(blob,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()};
 function xls(){const d=cur,h='<html><meta charset="utf-8"><body><table border="1"><tr>'+d.head.map(x=>`<th>${x}</th>`).join('')+'</tr>'+d.body.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+(d.foot?'<tr>'+d.foot.map(c=>`<td><b>${esc(c)}</b></td>`).join('')+'</tr>':'')+'</table></body></html>';dl(new Blob([h],{type:'application/vnd.ms-excel'}),'Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.xls');toast('Excel downloaded')}
-function downloadOneBillPDF(inv){
+async function downloadOneBillPDF(inv){
  if(!inv){alert('Bill record not found.');return}
- const J=window.jspdf;
- if(!J||!J.jsPDF){alert('PDF library load ஆகவில்லை. Internet connection சரிபார்த்து மீண்டும் முயற்சிக்கவும்.');return}
- const doc=new J.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
- const branch=inv.shopId==='shop1'?'CITY ELECTRICALS':inv.shopId==='shop2'?'CITY ELECTRICALS / SAMUDRA BRANCH 1':'BALU TECH';
- doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(branch,105,16,{align:'center'});
- doc.setFontSize(12);doc.text('INVOICE COPY',105,23,{align:'center'});
- doc.setFont('helvetica','normal');doc.setFontSize(9);
- doc.text('Invoice No: '+String(inv.invoiceNo||''),14,34);doc.text('Date: '+String(inv.date||''),145,34);
- doc.text('Customer: '+String(inv.customerName||''),14,41);
- const addr=String(inv.customerAddress||'');doc.text(doc.splitTextToSize('Address: '+addr,180),14,47);
- let y=47+Math.max(1,doc.splitTextToSize('Address: '+addr,180).length)*4.5;
- doc.text('Phone: '+String(inv.customerPhone||''),14,y);doc.text('GSTIN: '+String(inv.customerGstin||'-'),110,y);
- const rows=(inv.items||[]).map((x,i)=>[i+1,String(x.name||''),String(x.hsn||''),String(x.qty??''),String(x.uom||''),Number(x.rate||0).toFixed(2),Number(x.total??x.amount??0).toFixed(2)]);
- doc.autoTable({startY:y+5,head:[['S.No','Particulars','HSN','Qty','UOM','Rate (Rs.)','Amount (Rs.)']],body:rows.length?rows:[['','','','','','','']],styles:{fontSize:8,cellPadding:2,textColor:20,lineColor:80,lineWidth:.15},headStyles:{fillColor:[235,235,235],textColor:20},columnStyles:{0:{cellWidth:12},2:{cellWidth:18},3:{cellWidth:15},4:{cellWidth:15},5:{cellWidth:25},6:{cellWidth:27}}});
- let sy=doc.lastAutoTable.finalY+8; if(sy>260){doc.addPage();sy=18}
- const money=n=>'Rs. '+Number(n||0).toFixed(2);
- doc.setFontSize(9);doc.text('Taxable Value: '+money(inv.taxable),196,sy,{align:'right'});sy+=5;
- doc.text('CGST: '+money(inv.cgst),196,sy,{align:'right'});sy+=5;doc.text('SGST: '+money(inv.sgst),196,sy,{align:'right'});sy+=5;
- doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('GRAND TOTAL: '+money(inv.grand),196,sy+2,{align:'right'});
- const safe=String(inv.invoiceNo||'Bill').replace(/[^a-z0-9_-]/gi,'_');doc.save('Invoice_'+safe+'.pdf');
+ if(!window.jspdf||!window.jspdf.jsPDF||!window.html2canvas){alert('Invoice PDF library load ஆகவில்லை. Internet connection சரிபார்த்து மீண்டும் முயற்சிக்கவும்.');return}
+ const host=document.createElement('div');
+ host.style.cssText='position:fixed;left:-12000px;top:0;width:794px;background:#fff;color:#000;z-index:-1;pointer-events:none;';
+ const a5=inv.shopId==='shop3';
+ host.innerHTML='<div class="a4-page-frame active-layout'+(a5?' a5':'')+'" style="width:794px;max-width:none;min-height:0;margin:0;padding:24px;box-sizing:border-box;background:#fff;color:#000">'+bill(inv,a5)+'</div>';
+ document.body.appendChild(host);
+ try{
+   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+   const canvas=await html2canvas(host.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:900});
+   const J=window.jspdf.jsPDF,format=a5?'a5':'a4';
+   const doc=new J({orientation:'portrait',unit:'mm',format});
+   const pageW=doc.internal.pageSize.getWidth(),pageH=doc.internal.pageSize.getHeight(),margin=7;
+   const usableW=pageW-margin*2,usableH=pageH-margin*2;
+   const pxPerMm=canvas.width/usableW, pagePx=Math.floor(usableH*pxPerMm);
+   let y=0,page=0;
+   while(y<canvas.height){
+     const h=Math.min(pagePx,canvas.height-y),part=document.createElement('canvas');part.width=canvas.width;part.height=h;
+     part.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+     if(page)doc.addPage();
+     const img=part.toDataURL('image/jpeg',0.94),drawH=h/pxPerMm;
+     doc.addImage(img,'JPEG',margin,margin,usableW,drawH,undefined,'FAST');
+     y+=h;page++;
+   }
+   const safe=String(inv.invoiceNo||'Bill').replace(/[^a-z0-9_-]/gi,'_');
+   doc.save('Invoice_'+safe+'.pdf');
+ }catch(e){console.error('Original invoice PDF failed',e);alert('Original invoice PDF உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும். விவரம்: '+(e.message||e))}
+ finally{host.remove()}
 }
 function pdf(){const J=window.jspdf;if(!J||!J.jsPDF){alert('PDF library not loaded (internet needed). Use View > Print > Save as PDF.');return}const doc=new J.jsPDF({orientation:'landscape'});doc.setFontSize(12);doc.text(title(),14,12);doc.autoTable({head:[cur.head],body:cur.body.concat(cur.foot?[cur.foot]:[]),startY:18,styles:{fontSize:7,textColor:0,lineColor:0,lineWidth:.1},headStyles:{fillColor:[0,0,0],textColor:255}});doc.save('Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.pdf');toast('PDF downloaded')}
 /* v12 */
@@ -2410,7 +2436,7 @@ const U=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){retur
 const H=async x=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ce|'+x));return[...new Uint8Array(b)].map(y=>y.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'ce|'+x)h=(h*33^c.charCodeAt(0))>>>0;return'x'+h}};
 const em=u=>u+'@cityelectricals.app';
 
-/* ===== Firestore-first multi-device sync (cloud is authoritative) =====
+/* ===== Firestore-first + real-time multi-device sync (cloud is authoritative) =====
    Business data is read from Firestore after sign-in. LocalStorage is retained
    only as a temporary runtime/cache bridge for this legacy UI; it is NEVER
    merged back into Firestore during sign-in. Explicit deletes are permanent.
@@ -2565,12 +2591,55 @@ window.ceCloudLoadAndReload=async function(username){
     localStorage.setItem('ce_cloud_sync_user',username||'');
     localStorage.setItem(SK,JSON.stringify({u:username,role:'admin',day:today()}));
     window.dispatchEvent(new CustomEvent('ceCloudDataLoaded',{detail:{username,keys}}));
+    ceStartRealtime();
   }catch(e){
     ceCloudApplying=false;
     ceCloudReloading=false;
     throw e;
   }
 };
+
+/* ===== Real-time multi-device Firestore listeners =====
+   Keep the legacy UI globals in step with authoritative cloud snapshots.
+   Snapshot application is guarded so it never echoes back as a new write.
+*/
+let ceRealtimeUnsubs=[];
+function ceStopRealtime(){ceRealtimeUnsubs.forEach(fn=>{try{fn()}catch(e){}});ceRealtimeUnsubs=[]}
+function ceApplyRealtimeSnapshot(key,snapshot){
+ const map=CE_DATA_MAP[key]; if(!map)return;
+ let value;
+ if(map.single){const d=snapshot;value=d&&d.exists?(d.data().value??null):null}
+ else{
+   value=[];snapshot.forEach(doc=>{const row=doc.data();if(!row)return;delete row._ceSyncVersion;delete row.updatedAt;value.push(row)})
+ }
+ ceCloudApplying=true;
+ try{
+   if(map.single){if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify(value))}
+   else localStorage.setItem(key,JSON.stringify(value));
+   if(map.single)ceSetSnap(key,{v:value===null?'':ceHash(ceCanon(value))});
+   else{const baseline={};value.forEach(row=>{if(row&&typeof row==='object')baseline[ceSafeDocId(map.id(row))]=ceHash(ceCanon(row))});ceSetSnap(key,baseline)}
+ }finally{ceCloudApplying=false}
+ try{if(key==='ce_all_bills')savedInvoices=value||[];
+   else if(key==='ce_inventory_v4')inventory=value||[];
+   else if(key==='ce_suppliers')suppliers=value||[];
+   else if(key==='ce_counters'){for(const k in (value||{}))if(SHOPS[k])SHOPS[k].counter=Number(value[k])||SHOPS[k].counter}
+ }catch(e){console.warn('Realtime global refresh:',e)}
+ window.dispatchEvent(new CustomEvent('ceCloudRealtimeDataChanged',{detail:{key}}));
+}
+function ceStartRealtime(){
+ ceStopRealtime(); if(!auth.currentUser)return;
+ Object.keys(CE_DATA_MAP).forEach(key=>{
+   const map=CE_DATA_MAP[key];
+   const target=map.single?db.collection(map.collection).doc(map.single):db.collection(map.collection);
+   const unsub=target.onSnapshot(snap=>ceApplyRealtimeSnapshot(key,snap),err=>{
+     console.error('Firestore realtime listener failed for '+key,err);
+     window.dispatchEvent(new CustomEvent('ceCloudSyncError',{detail:{key,error:err}}));
+   });
+   ceRealtimeUnsubs.push(unsub);
+ });
+}
+auth.onAuthStateChanged(user=>{if(!user)ceStopRealtime()});
+
 async function fb(path,body){let r,j;try{r=await fetch('https://identitytoolkit.googleapis.com/v1/'+path+'?key='+FIREBASE_API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json()}catch(e){throw new Error('NO_INTERNET')}if(!r.ok)throw new Error((j.error&&j.error.message)||'FIREBASE_ERROR');return j}
 const fbMsg=c=>/INVALID_LOGIN|EMAIL_NOT_FOUND|INVALID_PASSWORD|INVALID_CREDENTIAL/.test(c)?'Wrong username or password':/EMAIL_EXISTS/.test(c)?'Username already exists':/OPERATION_NOT_ALLOWED/.test(c)?'Email/Password sign-in is not enabled in Firebase':/NO_INTERNET/.test(c)?'No internet connection':/WEAK_PASSWORD/.test(c)?'Password is too weak (min 6 characters)':/permission-denied|Missing or insufficient permissions/i.test(c)?'Firestore permission denied. Please update Firestore Rules for signed-in users.':c;
 document.body.insertAdjacentHTML('beforeend',`<div id="loginScreen"><div class="lg" id="lbox"><svg viewBox="0 0 680 470" preserveAspectRatio="none"><defs><linearGradient id="lgO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#f97316"/></linearGradient><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#99f6e4"/><stop offset="1" stop-color="#14b8a6"/></linearGradient><filter id="lgG" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
