@@ -17,7 +17,7 @@
 <script>/* Preserve existing local data; no automatic destructive reset. */</script>
 
 <meta charset="UTF-8">
-<meta name="ce-release-version" content="2026.11.03.2">
+<meta name="ce-release-version" content="2026.11.04.1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1976,6 +1976,10 @@ const f2=n=>(+n||0).toFixed(2),dmy=d=>(d||'').split('-').reverse().join('/');
 const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 let led=[];try{led=JSON.parse(localStorage.getItem('ce_stock_ledger')||'[]')}catch(e){}
 let CUST=null;try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'null')}catch(e){}
+window.addEventListener('ceCloudDataLoaded',()=>{
+  try{led=JSON.parse(localStorage.getItem('ce_stock_ledger')||'[]')}catch(e){led=[]}
+  try{CUST=JSON.parse(localStorage.getItem('ce_customers')||'[]')}catch(e){CUST=[]}
+});
 if(!Array.isArray(CUST)||(!CUST.length&&savedInvoices.length)){CUST=[];savedInvoices.slice().reverse().forEach(v=>{const n=(v.customerName||'').trim();if(!n||n==='Cash Customer')return;const c=CUST.find(x=>x.name.toLowerCase()===n.toLowerCase()),g=v.customerGstin&&v.customerGstin!=='-'?v.customerGstin:'';if(c){c.addr=v.customerAddress||c.addr;if(g)c.gstin=g}else CUST.push({id:Date.now()+Math.random(),name:n,addr:v.customerAddress||'',gstin:g})});localStorage.setItem('ce_customers',JSON.stringify(CUST))}
 const persist=()=>{localStorage.setItem('ce_all_bills',JSON.stringify(savedInvoices));localStorage.setItem('ce_inventory_v4',JSON.stringify(inventory));localStorage.setItem('ce_stock_ledger',JSON.stringify(led));localStorage.setItem('ce_counters',JSON.stringify({shop1:SHOPS.shop1.counter,shop2:SHOPS.shop2.counter,shop3:SHOPS.shop3.counter}))};
 const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)};
@@ -2406,9 +2410,10 @@ const U=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch(e){retur
 const H=async x=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('ce|'+x));return[...new Uint8Array(b)].map(y=>y.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of 'ce|'+x)h=(h*33^c.charCodeAt(0))>>>0;return'x'+h}};
 const em=u=>u+'@cityelectricals.app';
 
-/* ===== Firestore multi-device data sync =====
-   Business records are stored as individual documents, not one giant document.
-   The localStorage UI remains intact; writes are mirrored to Firestore after login.
+/* ===== Firestore-first multi-device sync (cloud is authoritative) =====
+   Business data is read from Firestore after sign-in. LocalStorage is retained
+   only as a temporary runtime/cache bridge for this legacy UI; it is NEVER
+   merged back into Firestore during sign-in. Explicit deletes are permanent.
 */
 const CE_DATA_MAP={
   ce_all_bills:{collection:'bills', id:x=>String(x.shopId||'shop')+'__'+String(x.invoiceNo||x.id||'bill')},
@@ -2416,7 +2421,7 @@ const CE_DATA_MAP={
   ce_suppliers:{collection:'suppliers', id:x=>String(x.id)},
   ce_customers:{collection:'customers', id:x=>String(x.id)},
   ce_stock_ledger:{collection:'stockLedger', id:x=>String(x.id)},
-  ce_custom_items:{collection:'customItems', id:x=>String((x&&typeof x==='object'&&(x.id||x.name||x.value||x.item))||ceHash(ceCanon(x)) )},
+  ce_custom_items:{collection:'customItems', id:x=>String((x&&typeof x==='object'&&(x.id||x.name||x.value||x.item))||ceHash(ceCanon(x)))},
   ce_counters:{collection:'appSettings', single:'counters'},
   ce_theme:{collection:'appSettings', single:'theme'}
 };
@@ -2436,11 +2441,9 @@ function ceHash(s){
   for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=((h1*33)^c)>>>0;h2=Math.imul(h2^c,16777619)>>>0}
   return h1.toString(36)+h2.toString(36)+'.'+s.length;
 }
-/* Snapshot = what this browser already knows is in the cloud (id -> content hash). Used to write ONLY changed records. */
 const CE_SNAP_PREFIX='ce_sync_snap_';
 function ceGetSnap(key){try{return JSON.parse(localStorage.getItem(CE_SNAP_PREFIX+key)||'{}')||{}}catch(e){return{}}}
 function ceSetSnap(key,o){try{ceOriginalSetItem.call(localStorage,CE_SNAP_PREFIX+key,JSON.stringify(o))}catch(e){}}
-/* Pending deletes = records the user explicitly deleted in the app; kept until Firestore confirms. */
 function ceDelList(){try{return JSON.parse(localStorage.getItem('ce_sync_del')||'[]')||[]}catch(e){return[]}}
 function ceSetDelList(a){try{ceOriginalSetItem.call(localStorage,'ce_sync_del',JSON.stringify(a))}catch(e){}}
 
@@ -2449,15 +2452,13 @@ async function ceWriteCollection(key, raw){
   if(!auth.currentUser||ceCloudApplying)return;
   const map=CE_DATA_MAP[key]; if(!map)return;
   let parsed; try{parsed=JSON.parse(raw)}catch(e){return}
-  const col=db.collection(map.collection);
-  const snap=ceGetSnap(key);
-  if(map.single){            // one small settings document (counters, theme)
+  const col=db.collection(map.collection), snap=ceGetSnap(key);
+  if(map.single){
     if(parsed===null||parsed===undefined)return;
     const h=ceHash(ceCanon(parsed));
     if(snap.v===h)return;
     await col.doc(map.single).set({value:parsed,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-    ceSetSnap(key,{v:h});
-    return;
+    ceSetSnap(key,{v:h}); return;
   }
   if(!Array.isArray(parsed))return;
   const changed=[];
@@ -2466,7 +2467,7 @@ async function ceWriteCollection(key, raw){
     const id=ceSafeDocId(map.id(item)), h=ceHash(ceCanon(item));
     if(snap[id]!==h)changed.push({id,item,h});
   }
-  if(!changed.length)return;          // nothing changed: no reads, no writes
+  if(!changed.length)return;
   const done={...snap};
   for(let i=0;i<changed.length;i+=400){
     const part=changed.slice(i,i+400), batch=db.batch();
@@ -2479,7 +2480,7 @@ async function ceWriteCollection(key, raw){
 function ceQueueWrite(key,value){
   if(!CE_DATA_MAP[key]||ceCloudApplying)return;
   const prev=cePending.get(key)||Promise.resolve();
-  const next=prev.catch(()=>{}).then(()=>ceWriteCollection(key,value)).catch(e=>console.error('Firestore sync failed for '+key,e));
+  const next=prev.catch(()=>{}).then(()=>ceWriteCollection(key,value)).catch(e=>{console.error('Firestore sync failed for '+key,e);window.dispatchEvent(new CustomEvent('ceCloudSyncError',{detail:{key,error:e}}))});
   cePending.set(key,next);
 }
 Storage.prototype.setItem=function(key,value){
@@ -2487,38 +2488,36 @@ Storage.prototype.setItem=function(key,value){
   if(this===localStorage&&CE_DATA_MAP[key]&&!ceCloudApplying)ceQueueWrite(key,String(value));
 };
 
-/* ---- Explicit delete: only a record the user deleted in the app is removed from Firestore ---- */
+/* Permanent delete: no deletedRecords documents are created. */
 async function ceFlushDeletes(){
   await ceAuthReady;
-  if(!auth.currentUser)return;
+  if(!auth.currentUser)throw new Error('Firebase login required to delete records');
   for(;;){
     const list=ceDelList(); if(!list.length)return;
-    const part=list.slice(0,200), batch=db.batch();
+    const part=list.slice(0,400), batch=db.batch();
     part.forEach(d=>{
       const m=CE_DATA_MAP[d.k]; if(!m||m.single)return;
       batch.delete(db.collection(m.collection).doc(d.id));
-      batch.set(db.collection('deletedRecords').doc(m.collection+'__'+d.id),{col:m.collection,id:d.id,at:firebase.firestore.FieldValue.serverTimestamp()});
     });
     await batch.commit();
     ceSetDelList(ceDelList().filter(x=>!part.some(p=>p.k===x.k&&p.id===x.id)));
-    part.forEach(d=>{const sn=ceGetSnap(d.k);if(sn[d.id]!==undefined){delete sn[d.id];ceSetSnap(d.k,sn)}});
+    part.forEach(d=>{const sn=ceGetSnap(d.k);delete sn[d.id];ceSetSnap(d.k,sn)});
   }
 }
 window.ceDeleteRecord=function(key,rec){
   const map=CE_DATA_MAP[key]; if(!map||map.single||!rec||typeof rec!=='object')return;
   const id=ceSafeDocId(map.id(rec)), list=ceDelList();
   if(!list.some(d=>d.k===key&&d.id===id)){list.push({k:key,id});ceSetDelList(list)}
-  const prev=cePending.get(key)||Promise.resolve();
-  cePending.set(key,prev.catch(()=>{}).then(ceFlushDeletes).catch(e=>console.error('Firestore delete failed',e)));
+  // Serialize a delete after any queued write for the same collection. This
+  // prevents a delayed upsert from recreating a record immediately after delete.
+  const prevWrite=cePending.get(key)||Promise.resolve();
+  const prevDelete=cePending.get('__deletes')||Promise.resolve();
+  const next=Promise.all([prevWrite.catch(()=>{}),prevDelete.catch(()=>{})])
+    .then(ceFlushDeletes)
+    .catch(e=>{console.error('Firestore permanent delete failed',e);window.dispatchEvent(new CustomEvent('ceCloudSyncError',{detail:{key,error:e}}))});
+  cePending.set('__deletes',next);
 };
 function ceFlushAll(){return Promise.all([...cePending.values()].map(p=>p.catch(()=>{})))}
-async function ceReadTombstones(){
-  const out={}, add=(c,i)=>{(out[c]=out[c]||new Set()).add(i)};
-  const snap=await db.collection('deletedRecords').get();
-  snap.forEach(doc=>{const d=doc.data();if(d&&d.col&&d.id)add(d.col,d.id)});
-  ceDelList().forEach(d=>{const m=CE_DATA_MAP[d.k];if(m&&!m.single)add(m.collection,d.id)});
-  return out;
-}
 
 async function ceReadCollection(key){
   const map=CE_DATA_MAP[key], col=db.collection(map.collection);
@@ -2531,50 +2530,45 @@ window.ceCloudLoadAndReload=async function(username){
   if(!FB||!auth.currentUser||ceCloudReloading)return;
   ceCloudReloading=true;
   const keys=Object.keys(CE_DATA_MAP);
-  try{await ceFlushDeletes()}catch(e){console.error('Pending deletes not sent yet',e)}
-  const tomb=await ceReadTombstones();
-  // Read independent Firestore collections concurrently to shorten sign-in wait.
-  const cloudValues=await Promise.all(keys.map(key=>ceReadCollection(key)));
-  const cloudByKey=Object.fromEntries(keys.map((key,i)=>[key,cloudValues[i]]));
   try{
+    // Complete any explicitly requested deletes before fetching the authoritative cloud state.
+    await ceFlushDeletes();
+    const cloudValues=await Promise.all(keys.map(key=>ceReadCollection(key)));
+    const cloudByKey=Object.fromEntries(keys.map((key,i)=>[key,cloudValues[i]]));
     ceCloudApplying=true;
-    for(const key of keys){
-      const map=CE_DATA_MAP[key];
-      const cloud=cloudByKey[key];
-      const local=localStorage.getItem(key);
-      let localValue=null; try{localValue=local?JSON.parse(local):null}catch(e){}
-      if(map.single){
-        ceSetSnap(key,cloud!==null&&cloud!==undefined?{v:ceHash(ceCanon(cloud))}:{});
-        let merged;
-        if(key==='ce_counters'){           // invoice counters: always keep the HIGHER number so numbers never go backwards
-          merged={...(localValue&&typeof localValue==='object'?localValue:{})};
-          if(cloud&&typeof cloud==='object')for(const k in cloud){const a=Number(merged[k]),b=Number(cloud[k]);merged[k]=(isNaN(a)||b>a)?cloud[k]:merged[k]}
-          if(!Object.keys(merged).length)merged=null;
-        } else merged=(cloud!==null&&cloud!==undefined)?cloud:localValue;
-        if(merged!==null&&merged!==undefined)localStorage.setItem(key,JSON.stringify(merged));
-      } else {
-        const gone=tomb[map.collection]||new Set();
-        const keep=item=>item&&typeof item==='object'&&!gone.has(ceSafeDocId(map.id(item)));
-        const base={};
-        if(Array.isArray(cloud))cloud.forEach(it=>{if(keep(it))base[ceSafeDocId(map.id(it))]=ceHash(ceCanon(it))});
-        ceSetSnap(key,base);   // baseline = what the cloud already has
-        const merged=new Map();
-        if(Array.isArray(localValue))localValue.forEach(item=>{if(keep(item))merged.set(ceSafeDocId(map.id(item)),item)});
-        if(Array.isArray(cloud))cloud.forEach(item=>{if(keep(item))merged.set(ceSafeDocId(map.id(item)),item)});
-        const combined=[...merged.values()];
-        if(combined.length||local)localStorage.setItem(key,JSON.stringify(combined));
+    try{
+      for(const key of keys){
+        const map=CE_DATA_MAP[key], cloud=cloudByKey[key];
+        if(map.single){
+          if(cloud!==null&&cloud!==undefined){
+            localStorage.setItem(key,JSON.stringify(cloud));
+            ceSetSnap(key,{v:ceHash(ceCanon(cloud))});
+          }else{
+            localStorage.removeItem(key); ceSetSnap(key,{});
+          }
+        }else{
+          const rows=Array.isArray(cloud)?cloud:[];
+          const baseline={};
+          rows.forEach(item=>{if(item&&typeof item==='object')baseline[ceSafeDocId(map.id(item))]=ceHash(ceCanon(item))});
+          ceSetSnap(key,baseline);
+          // Cloud is the source of truth: overwrite stale device cache; never merge or upload it.
+          localStorage.setItem(key,JSON.stringify(rows));
+        }
       }
-    }
+    }finally{ceCloudApplying=false}
     ceCloudLoadDone=true;
-  } finally {ceCloudApplying=false;}
-  // Push only the records that exist locally but not in the cloud yet.
-  await Promise.all(keys.map(key=>{const raw=localStorage.getItem(key);return raw?ceWriteCollection(key,raw):Promise.resolve()}));
-  // The app's arrays are initialized during page load, so reload after cloud data has been applied.
-  localStorage.setItem('ce_cloud_sync_user',username||'');
-  localStorage.setItem(SK,JSON.stringify({u:username,role:'admin',day:today()}));
-  if(!sessionStorage.getItem('ce_cloud_reloaded')){
-    sessionStorage.setItem('ce_cloud_reloaded','1'); location.reload();
-    return;
+    // Refresh legacy app globals from Firestore data without forcing a page reload.
+    try{savedInvoices=JSON.parse(localStorage.getItem('ce_all_bills')||'[]')}catch(e){savedInvoices=[]}
+    try{inventory=JSON.parse(localStorage.getItem('ce_inventory_v4')||'[]')}catch(e){inventory=[]}
+    try{suppliers=JSON.parse(localStorage.getItem('ce_suppliers')||'[]')}catch(e){suppliers=[]}
+    try{const cc=JSON.parse(localStorage.getItem('ce_counters')||'{}');for(const k in cc)if(SHOPS[k])SHOPS[k].counter=Number(cc[k])||SHOPS[k].counter}catch(e){}
+    localStorage.setItem('ce_cloud_sync_user',username||'');
+    localStorage.setItem(SK,JSON.stringify({u:username,role:'admin',day:today()}));
+    window.dispatchEvent(new CustomEvent('ceCloudDataLoaded',{detail:{username,keys}}));
+  }catch(e){
+    ceCloudApplying=false;
+    ceCloudReloading=false;
+    throw e;
   }
 };
 async function fb(path,body){let r,j;try{r=await fetch('https://identitytoolkit.googleapis.com/v1/'+path+'?key='+FIREBASE_API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});j=await r.json()}catch(e){throw new Error('NO_INTERNET')}if(!r.ok)throw new Error((j.error&&j.error.message)||'FIREBASE_ERROR');return j}
@@ -2745,7 +2739,7 @@ body::before,body::after{animation:none!important}
 })();
 </script>
 <script>
-/* Quotation-only Firebase storage and search. Existing billing/inventory logic is untouched. */
+/* Quotations and quotation numbering are stored directly in Firestore; the main ERP data collections are synced by the Firestore-first layer above. */
 (function(){
  const $=id=>document.getElementById(id);
  const branchNames={shop1:'CITY ELECTRICALS',shop2:'CITY ELECTRICALS / SAMUDRA',shop3:'BALU TECH'};
