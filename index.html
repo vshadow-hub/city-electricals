@@ -386,6 +386,18 @@ body::before,body::after{animation:none!important}
   #shopSelectScreen .ce-quote-launch { min-width:190px !important; padding:12px 24px !important; }
 }
 </style>
+    <style id="CE_PDF_LAYOUT_FIX">
+   .ce-pdf-host .nb{width:100%!important;box-sizing:border-box!important;font-family:Arial,sans-serif!important;line-height:1.4!important}
+   .ce-pdf-host .nb table.g{width:100%!important;border-collapse:collapse!important;border-spacing:0!important;margin-top:0!important;table-layout:fixed!important}
+   .ce-pdf-host .nb .g td,.ce-pdf-host .nb .g th{border:1px solid #000!important;padding:5px 6px!important;line-height:1.4!important;vertical-align:middle!important;box-sizing:border-box!important;overflow-wrap:anywhere!important}
+   .ce-pdf-host .nb .itw{display:block!important;width:100%!important;flex:none!important;margin-top:0!important}
+   .ce-pdf-host .nb .itw table{width:100%!important;height:auto!important;flex:none!important;table-layout:fixed!important;border-collapse:collapse!important;margin:0!important}
+   .ce-pdf-host .nb .it td{padding:5px 6px!important;line-height:1.4!important;height:auto!important;overflow-wrap:anywhere!important}
+   .ce-pdf-host .nb .g .r{text-align:right!important;white-space:nowrap!important}
+   .ce-pdf-host .nb .g .c{text-align:center!important}
+   .ce-pdf-host .nb .rmk{margin:0!important;padding:5px 7px!important;line-height:1.4!important;border:1px solid #000!important;overflow-wrap:anywhere!important}
+   .ce-pdf-host .nb .g tr{break-inside:avoid!important;page-break-inside:avoid!important}
+   </style>
 </head>
 <body class="text-slate-100 font-sans min-h-screen electric-grid selection:bg-amber-500 selection:text-black"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="ceG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a2)"/><stop offset="1" style="stop-color:var(--a)"/></linearGradient>
@@ -2164,36 +2176,154 @@ $('tabReports').addEventListener('click',e=>{const b=e.target.closest('button');
 const title=()=>`${activeShop.title||'City Electricals'} - ${mode==='aud'?'Auditor Sales Report':'Daily Sales Details'} ${$('rM').value||(($('rF').value?dmy($('rF').value):'')+' '+($('rT').value?'to '+dmy($('rT').value):''))}`;
 const dl=(blob,n)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()};
 function xls(){const d=cur,h='<html><meta charset="utf-8"><body><table border="1"><tr>'+d.head.map(x=>`<th>${x}</th>`).join('')+'</tr>'+d.body.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+(d.foot?'<tr>'+d.foot.map(c=>`<td><b>${esc(c)}</b></td>`).join('')+'</tr>':'')+'</table></body></html>';dl(new Blob([h],{type:'application/vnd.ms-excel'}),'Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.xls');toast('Excel downloaded')}
-async function downloadOneBillPDF(inv){
- if(!inv){alert('Bill record not found.');return}
- if(!window.jspdf||!window.jspdf.jsPDF||!window.html2canvas){alert('Invoice PDF library load ஆகவில்லை. Internet connection சரிபார்த்து மீண்டும் முயற்சிக்கவும்.');return}
- const host=document.createElement('div');
- host.style.cssText='position:fixed;left:-12000px;top:0;width:794px;background:#fff;color:#000;z-index:-1;pointer-events:none;';
- const a5=inv.shopId==='shop3';
- host.innerHTML='<div class="a4-page-frame active-layout'+(a5?' a5':'')+'" style="width:794px;max-width:none;min-height:0;margin:0;padding:24px;box-sizing:border-box;background:#fff;color:#000">'+bill(inv,a5)+'</div>';
- document.body.appendChild(host);
- try{
-   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-   const canvas=await html2canvas(host.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:900});
-   const J=window.jspdf.jsPDF,format=a5?'a5':'a4';
-   const doc=new J({orientation:'portrait',unit:'mm',format});
-   const pageW=doc.internal.pageSize.getWidth(),pageH=doc.internal.pageSize.getHeight(),margin=7;
-   const usableW=pageW-margin*2,usableH=pageH-margin*2;
-   const pxPerMm=canvas.width/usableW, pagePx=Math.floor(usableH*pxPerMm);
-   let y=0,page=0;
-   while(y<canvas.height){
-     const h=Math.min(pagePx,canvas.height-y),part=document.createElement('canvas');part.width=canvas.width;part.height=h;
-     part.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
-     if(page)doc.addPage();
-     const img=part.toDataURL('image/jpeg',0.94),drawH=h/pxPerMm;
-     doc.addImage(img,'JPEG',margin,margin,usableW,drawH,undefined,'FAST');
-     y+=h;page++;
-   }
-   const safe=String(inv.invoiceNo||'Bill').replace(/[^a-z0-9_-]/gi,'_');
-   doc.save('Invoice_'+safe+'.pdf');
- }catch(e){console.error('Original invoice PDF failed',e);alert('Original invoice PDF உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும். விவரம்: '+(e.message||e))}
- finally{host.remove()}
+
+async function downloadOneBillPDF(inv) {
+    if (!inv) {
+        alert('Bill record not found.');
+        return;
+    }
+
+    if (!window.jspdf?.jsPDF || !window.html2canvas) {
+        alert('PDF library not loaded. Please try again.');
+        return;
+    }
+
+    const a5 = inv.shopId === 'shop3';
+
+    const pageW = a5 ? 148 : 210;
+    const pageH = a5 ? 210 : 297;
+    const margin = a5 ? 6 : 10;
+
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
+
+    // 96 CSS pixels approximately per inch
+    const cssWidth = Math.round(usableW * 96 / 25.4);
+
+    const host = document.createElement('div');
+    host.className='ce-pdf-host';
+
+    host.style.cssText = `
+        position:fixed;
+        left:-10000px;
+        top:0;
+        width:${cssWidth}px;
+        background:#fff;
+        color:#000;
+        box-sizing:border-box;
+        overflow:visible;
+        pointer-events:none;
+    `;
+
+    host.innerHTML = `
+        <div class="a4-page-frame active-layout ${a5 ? 'a5' : ''}"
+             style="
+                width:100%;
+                max-width:100%;
+                min-height:0;
+                height:auto;
+                margin:0;
+                padding:${a5 ? '12px' : '22px'};
+                box-sizing:border-box;
+                background:#fff;
+                color:#000;
+                border:1px solid #000;
+                display:block;
+             ">
+             ${bill(inv, a5)}
+        </div>
+    `;
+
+    document.body.appendChild(host);
+
+    try {
+        await new Promise(resolve =>
+            requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+            )
+        );
+
+        const canvas = await html2canvas(
+            host.firstElementChild,
+            {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+                width: cssWidth,
+                windowWidth: cssWidth,
+                scrollX: 0,
+                scrollY: 0
+            }
+        );
+
+        const J = window.jspdf.jsPDF;
+
+        const doc = new J({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: a5 ? 'a5' : 'a4',
+            compress: true
+        });
+
+        const pxPerMm = canvas.width / usableW;
+        const pagePx = Math.floor(usableH * pxPerMm);
+
+        let y = 0;
+        let page = 0;
+
+        while (y < canvas.height) {
+            const h = Math.min(
+                pagePx,
+                canvas.height - y
+            );
+
+            const part = document.createElement('canvas');
+            part.width = canvas.width;
+            part.height = h;
+
+            part.getContext('2d').drawImage(
+                canvas,
+                0, y,
+                canvas.width, h,
+                0, 0,
+                canvas.width, h
+            );
+
+            if (page > 0) {
+                doc.addPage();
+            }
+
+            const img = part.toDataURL('image/png');
+
+            doc.addImage(
+                img,
+                'PNG',
+                margin,
+                margin,
+                usableW,
+                h / pxPerMm,
+                undefined,
+                'FAST'
+            );
+
+            y += h;
+            page++;
+        }
+
+        const safe = String(inv.invoiceNo || 'Bill')
+            .replace(/[^a-z0-9_-]/gi, '_');
+
+        doc.save('Invoice_' + safe + '.pdf');
+
+    } catch (e) {
+        console.error('Invoice PDF Error:', e);
+        alert('PDF உருவாக்குவதில் பிரச்சினை: ' + e.message);
+    } finally {
+        host.remove();
+    }
 }
+
 function pdf(){const J=window.jspdf;if(!J||!J.jsPDF){alert('PDF library not loaded (internet needed). Use View > Print > Save as PDF.');return}const doc=new J.jsPDF({orientation:'landscape'});doc.setFontSize(12);doc.text(title(),14,12);doc.autoTable({head:[cur.head],body:cur.body.concat(cur.foot?[cur.foot]:[]),startY:18,styles:{fontSize:7,textColor:0,lineColor:0,lineWidth:.1},headStyles:{fillColor:[0,0,0],textColor:255}});doc.save('Sales_'+(mode==='aud'?'Auditor':'Daily')+'_'+today()+'.pdf');toast('PDF downloaded')}
 /* v12 */
 window.stkDelItem=function(id){const p=inventory.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete item "${p.name}"?`+(p.outward>0?`\nIt has sales history (${p.outward} sold).`:'')))return;led.filter(l=>l.pid===id).forEach(l=>window.ceDeleteRecord&&window.ceDeleteRecord('ce_stock_ledger',l));window.ceDeleteRecord&&window.ceDeleteRecord('ce_inventory_v4',p);inventory=inventory.filter(x=>x.id!==id);led=led.filter(l=>l.pid!==id);persist();renderStockTable();populateDropdown();renderMasterTables();mrefresh();toast('Item deleted')};
@@ -2231,10 +2361,60 @@ window.addItemToCurrentBill=function(){
  if(parseInt(sel.value)){prevAdd();return}
  const name=$('itemSearch').value.replace(/[<>]/g,'').trim(),qty=parseFloat($('itemQty').value),rate=parseFloat($('itemRate').value);
  if(!name||!(qty>0)||isNaN(rate)||rate<0){alert('Enter item name, quantity and rate.');return}
- const hsn=$('itemHsn').value.trim()||'-',uom=$('itemUom').value||'NOS',taxable=rate*qty,g=activeShop.isGst?taxable*.09:0;
- let pr=inventory.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!pr){pr={id:Date.now(),name,hsn,uom,defaultRate:rate,inward:0,outward:0};inventory.push(pr);persist();populateDropdown();renderStockTable();renderMasterTables();mrefresh();toast('New product saved to Master')}
- currentBillItems.push({id:pr.id,name,hsn,uom,qty,rate,taxable,cgst:g,sgst:g,total:taxable+2*g});
  
+const hsn=$('itemHsn').value.trim()||'-';
+const uom=$('itemUom').value||'NOS';
+const gross=Math.round(rate*qty*100)/100;
+
+let taxable=gross,cgst=0,sgst=0,total=gross;
+let taxCode='none',gstRate=0;
+
+if(activeShop.isGst){
+    taxCode=String($('itemTaxCode').value||'');
+
+    if(!['-18','18','5','0','none'].includes(taxCode)){
+        alert('Please select GST Tax Code.');
+        $('itemTaxCode').focus();
+        return;
+    }
+
+    if(taxCode==='-18'){
+        gstRate=18;
+        taxable=Math.round((gross/1.18)*100)/100;
+        cgst=Math.round(taxable*0.09*100)/100;
+        sgst=Math.round(taxable*0.09*100)/100;
+        total=gross;
+    }
+    else if(taxCode==='18'){
+        gstRate=18;
+        cgst=Math.round(taxable*0.09*100)/100;
+        sgst=Math.round(taxable*0.09*100)/100;
+        total=Math.round((taxable+cgst+sgst)*100)/100;
+    }
+    else if(taxCode==='5'){
+        gstRate=5;
+        cgst=Math.round(taxable*0.025*100)/100;
+        sgst=Math.round(taxable*0.025*100)/100;
+        total=Math.round((taxable+cgst+sgst)*100)/100;
+    }
+}
+
+currentBillItems.push({
+    id:pr.id,
+    name,
+    hsn,
+    uom,
+    qty,
+    rate,
+    taxable,
+    cgst,
+    sgst,
+    total,
+    gstRate,
+    taxCode,
+    roundGross:gross
+});
+
  renderBillItemsTable();calculateTotals();['itemSearch','itemHsn','itemRate'].forEach(k=>$(k).value='');$('itemQty').value='1';sel.value='';$('itemSearch').focus();
 };
 const _spm=window.saveProductMaster;window.saveProductMaster=function(){if(!$('mProdHsn').value.trim())$('mProdHsn').value='-';_spm()};
