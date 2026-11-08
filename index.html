@@ -2398,7 +2398,30 @@ if(activeShop.isGst){
         total=Math.round((taxable+cgst+sgst)*100)/100;
     }
 }
+// Find or create the product in Item Master
+let pr = inventory.find(
+    p => String(p.name || '').trim().toLowerCase() === name.toLowerCase()
+);
 
+// If this is a new item, create its master record
+if (!pr) {
+    pr = {
+        id: Date.now(),
+        name: name,
+        hsn: hsn,
+        uom: uom,
+        defaultRate: rate,
+        inward: 0,
+        outward: 0
+    };
+
+    inventory.push(pr);
+
+    if (typeof persist === 'function') persist();
+    if (typeof populateDropdown === 'function') populateDropdown();
+    if (typeof renderStockTable === 'function') renderStockTable();
+    if (typeof renderMasterTables === 'function') renderMasterTables();
+}
 currentBillItems.push({
     id:pr.id,
     name,
